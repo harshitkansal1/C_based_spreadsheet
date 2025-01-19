@@ -3,7 +3,9 @@
 #include<sheet.h>
 #include<time.h>
 #include<string.h>
-#define MAX_SIZE 100;
+#include<input_process.h>
+
+#define MAX_SIZE 100
 void print_status(double *time , char *msg){
     printf("[%.1f] (%s) > " , *time , msg);
 }
@@ -13,40 +15,40 @@ int main(int argc , char** argv){
         printf("Invalid number of arguments\n");
         return 1;
     }
-    time_t start , end;
+    clock_t start_time , end_time;
     double timed = 0.0;
-    char input[100] , input_test[100];
-    start = time(NULL);
+    char input[MAX_SIZE];
+    int input_type = 0;
+    char cell1[MAX_SIZE] , cell2[MAX_SIZE] , cell3[MAX_SIZE];
+    char operation[MAX_SIZE];
     int rows = atoi(argv[1]);
     int cols = atoi(argv[2]);
     if (rows > 999 || rows < 1 ) {printf("Invalid number of rows"); return 1;}
     if (cols > 18278 || cols < 1) {printf("Invalid number of columns"); return 1;}
+    start_time = clock();
     int **sheet = initialize_sheet(rows, cols);
     print_sheet(sheet , 0);
-    end = time(NULL);
-    timed = difftime(end , start);
+    end_time = clock();
+    timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
     print_status( &timed , "ok");
     while (1){
-        start = time(NULL);
-        if (scanf("%s %s" , input , input_test) == 2){
-            end = time(NULL);
-            timed = difftime(end , start);
+        fgets(input , MAX_SIZE, stdin);
+        start_time = clock();
+        input_type  = process_input(input , cell1 , cell2 , operation , cell3);   
+        if (input_type== 0){
+            end_time = clock();
+            timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
             print_status(&timed , "invalid command");
             continue;
         }
-        if (input[1] == '\0'){
-            if (input[0] == 'q') break;
-            else if (input[0] == 's') print_sheet(sheet , 's');
-            else if (input[0] == 'w') print_sheet(sheet , 'w');
-            else if (input[0] == 'a') print_sheet(sheet , 'a');
-            else if (input[0] == 'd') print_sheet(sheet , 'd');
-            else {print_sheet(sheet , 0); end = time(NULL); timed = difftime(end , start); print_status(&timed , "invalid command"); continue;}
-            end = time(NULL);
-            timed = difftime(end , start);
+        else if (input_type == 1){
+            process_control_input(sheet , operation[0]);
+            end_time = clock();
+            timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
             print_status(&timed , "ok");
             continue;
-        }
-
+        } 
+        else if (input_type == 2);
     }
     return 0;
 }

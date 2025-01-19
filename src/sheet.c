@@ -35,14 +35,14 @@ void print_sheet(int** sheet, int direction){
             printf("%c\t" , ('A' + i));
         }
         else if (i < 26 + 26*26) {
-            char c1 = (i-26)%(26*26);
-            char c2 = (i-26)%(26);
+            char c1 = 'A'+((i-26)/(26));
+            char c2 = 'A'+((i-26)%(26));
             printf("%c%c\t" , c1 , c2);
         }
         else {
-            char c1 = (i-26 - 26*26)%(26*26*26);
-            char c2 = (i-26 - 26*26)%(26*26);
-            char c3 =  (i-26 - 26*26)%26;
+            char c1 = 'A'+((i-26 - 26*26)/(26*26));
+            char c2 = 'A'+((i-26 - 26*26)/(26));
+            char c3 =  'A'+((i-26 - 26*26)%26);
             printf("%c%c%c\t" , c1 , c2 , c3);
         }
     }
@@ -55,4 +55,15 @@ void print_sheet(int** sheet, int direction){
         printf("\n");
     }
 }
+
+void process_control_input(int** sheet , char control){
+    if (control == 'q') {
+        exit(0);
+    }
+    else if (control == 's') print_sheet(sheet , 's');
+    else if (control == 'w') print_sheet(sheet , 'w');
+    else if (control == 'a') print_sheet(sheet , 'a');
+    else if (control == 'd') print_sheet(sheet , 'd');
+}
+
 
