@@ -6,6 +6,34 @@
 
 int ROWS , COLS , origin_x , origin_y;
 
+int cell_to_coords(char *cell , int* coords){
+    int i = 0;
+    int j = 0;
+    int col = 0;
+    int row = 0;
+    while ((cell[i] >= 'A' && cell[i] <= 'Z') && cell[i] != '\0'){
+        i++;
+    }
+    if (i == 0 || i > 3) return 0;
+    while (j<i){
+        col*=26;
+        col+=(cell[j]-'A')+1;
+        j++;
+    }
+    if (col > COLS) return 0;
+    if (cell[i] == '0') return 0;
+    while ((cell[i] >= '0' && cell[i] <= '9') && cell[i] != '\0'){
+        row*=10;
+        row+=(cell[i]-'0');
+        i++;
+    }
+    if (cell[i] != '\0') return 0;
+    if (row > ROWS) return 0;
+    coords[0] = row;
+    coords[1] = col;
+    return 1;
+}
+
 int** initialize_sheet(int rows, int cols){
     ROWS = rows;
     COLS = cols;

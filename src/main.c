@@ -49,6 +49,7 @@ int main(int argc , char** argv){
             continue;
         } 
         else if (input_type == 2);
+        printf("%d" , input_type);
     }
     return 0;
 }
