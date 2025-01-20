@@ -29,8 +29,8 @@ int cell_to_coords(char *cell , int* coords){
     }
     if (cell[i] != '\0') return 0;
     if (row > ROWS) return 0;
-    coords[0] = row;
-    coords[1] = col;
+    coords[0] = row-1;
+    coords[1] = col-1;
     return 1;
 }
 
@@ -94,4 +94,16 @@ void process_control_input(int** sheet , char control){
     else if (control == 'd') print_sheet(sheet , 'd');
 }
 
+int process_assign_input(int** sheet, char* cell , char* value){
+    int coords1[2];
+    int coords2[2];
+    cell_to_coords(cell , coords1);
+    if (cell_to_coords(value , coords2) == 0) {
+        sheet[coords1[0]][coords1[1]] = atoi(value);
+        printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
+    }
+    else{
+        sheet[coords1[0]][coords1[1]] = sheet[coords2[0]][coords2[1]];
+    }
+}
 

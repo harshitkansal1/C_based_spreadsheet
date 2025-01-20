@@ -113,7 +113,7 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
             j++;
             i++;
         }
-        if (line[i] == ')') return 0;
+        if (line[i] != ')') return 0;
         i++;
         if (line[i] != '\0' && line[i]!= '\n') return 0;
         cell3[j] = '\0';

@@ -43,12 +43,26 @@ int main(int argc , char** argv){
         }
         else if (input_type == 1){
             process_control_input(sheet , operation[0]);
+            print_sheet(sheet , 0);
             end_time = clock();
             timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
             print_status(&timed , "ok");
             continue;
         } 
-        else if (input_type == 2);
+        else if (input_type == 2){
+            process_assign_input(sheet , cell1 , cell2);
+            print_sheet(sheet , 0);
+            end_time = clock();
+            timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+            print_status(&timed , "ok");
+            continue;
+        }
+        else if (input_type == 3){
+            ;
+        }
+        else if (input_type == 4){
+            ;
+        }
         printf("%d" , input_type);
     }
     return 0;
