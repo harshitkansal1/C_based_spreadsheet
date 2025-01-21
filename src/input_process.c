@@ -44,17 +44,17 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
     }   
     if (temp == 0){
         if (j>10) return 0; //overflow
-        else return 2;
     }
-    if (!cell_to_coords(cell2 , coords)) return 0; // invalid cell
+    if (!cell_to_coords(cell2 , coords) && temp) return 0; // invalid cell
     }
     if (line[i] == '\0' || line[i] == '\n') return 2;
     if (!(line[i] == '(')){
+        temp=0;
         operation[0] = line[i];
         operation[1] = '\0';
         i++;
         j = 0;
-        while (line[i] != '\0'){
+        while (line[i] != '\0' && line[i] != '\n'){
             cell3[j] = line[i];
             j++;
             i++;
@@ -66,9 +66,8 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
         }   
         if (temp == 0){
             if (j>10) return 0; //overflow
-            else return 3;
         }
-        if (!cell_to_coords(cell3 , coords)) return 0; // invalid cell
+        if (!cell_to_coords(cell3 , coords) && temp) return 0; // invalid cell
         return 3;
     }
     if (strcmp(cell2 , "SLEEP") == 0){
@@ -85,6 +84,7 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
         i++;
         if (line[i] != '\0' && line[i]!= '\n') return 0;
         if (cell2[0] == '0') return 0; // number starts with zero
+        temp = 0;
         for (int k = 0; k < j; k++){
         if (cell2[k] < '0' || cell2[k] > '9') temp = 1;
         }   
