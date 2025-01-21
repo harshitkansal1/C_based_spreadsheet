@@ -126,4 +126,5 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
     else if (operation[0] == '*') sheet[coords1[0]][coords1[1]] = v1 * v2;
     else if (operation[0] == '/') sheet[coords1[0]][coords1[1]] = v1 / v2;
     printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
+
 }
