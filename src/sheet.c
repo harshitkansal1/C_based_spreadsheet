@@ -1,5 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<functions.h>
+#include<string.h>
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
@@ -127,4 +129,22 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
     else if (operation[0] == '/') sheet[coords1[0]][coords1[1]] = v1 / v2;
     printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
 
+}
+
+int process_functions(int **sheet, char *cell, char *start, char *operation, char *end){
+    if(strcmp(operation, "MIN") == 0){
+        min_range(sheet, cell, start, end);
+    }
+    else if(strcmp(operation, "MAX") == 0){
+        max_range(sheet, cell, start, end);
+    }
+    else if(strcmp(operation, "SUM") == 0){
+        sum_range(sheet, cell, start, end);
+    }
+    else if(strcmp(operation, "AVG") == 0){
+        avg_range(sheet, cell, start, end);
+    }
+    else if(strcmp(operation, "STDEV") == 0){
+        std_dev_range(sheet, cell, start, end);
+    }
 }

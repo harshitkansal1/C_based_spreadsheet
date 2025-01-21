@@ -66,7 +66,12 @@ int main(int argc , char** argv){
             continue;
         }
         else if (input_type == 4){
-            ;
+            process_functions(sheet , cell1 , cell2 , operation , cell3);
+            print_sheet(sheet , 0);
+            end_time = clock();
+            timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+            print_status(&timed , "ok");
+            continue;
         }
         printf("%d" , input_type);
     }

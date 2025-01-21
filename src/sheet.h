@@ -4,4 +4,5 @@ void print_sheet(int** , int);
 void process_control_input(int** , char);
 int process_assign_input(int** , char* , char*);
 int process_arith_expr(int** , char* , char* , char* , char*);
+int process_functions(int** , char* , char* , char* , char*);
 extern int ROWS , COLS;

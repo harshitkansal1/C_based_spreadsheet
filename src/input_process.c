@@ -91,8 +91,8 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
         if (temp == 0){
             if (j>10) return 0; //overflow
         }   
-    if (!cell_to_coords(cell2 , coords) && temp) return 0; // invalid cell
-    return 4;
+        if (!cell_to_coords(cell2 , coords) && temp) return 0; // invalid cell
+        return 4;
     }
     if (strcmp(cell2 , "SUM") == 0 || strcmp(cell2 , "AVG") == 0 || strcmp(cell2 , "MAX") == 0 || strcmp(cell2 , "MIN") == 0 || strcmp(cell2 , "STDEV") == 0 ) {
         strcpy(operation , cell2);
