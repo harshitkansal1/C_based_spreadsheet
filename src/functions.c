@@ -13,6 +13,9 @@ int min_range(int **sheet, char *cell, char *start, char *end){
     cell_to_coords(cell , coords1);
     cell_to_coords(start , coords2);
     cell_to_coords(end , coords3);
+
+    if(coords2[0] > coords3[0] || coords2[1] > coords3[1]) return 0;
+
     int minn = sheet[coords2[0]][coords2[1]];
     for(int i = coords2[0]; i <= coords3[0]; i++){
         for(int j = coords2[1]; j <= coords3[1]; j++){
@@ -20,6 +23,7 @@ int min_range(int **sheet, char *cell, char *start, char *end){
         }
     }
     sheet[coords1[0]][coords1[1]] = minn;
+    return 1;
 }
 
 int max_range(int **sheet, char *cell, char *start, char *end){
@@ -29,6 +33,9 @@ int max_range(int **sheet, char *cell, char *start, char *end){
     cell_to_coords(cell , coords1);
     cell_to_coords(start , coords2);
     cell_to_coords(end , coords3);
+
+    if(coords2[0] > coords3[0] || coords2[1] > coords3[1]) return 0;
+
     int maxx = sheet[coords2[0]][coords2[1]];
     for(int i = coords2[0]; i <= coords3[0]; i++){
         for(int j = coords2[1]; j <= coords3[1]; j++){
@@ -36,6 +43,7 @@ int max_range(int **sheet, char *cell, char *start, char *end){
         }
     }
     sheet[coords1[0]][coords1[1]] = maxx;
+    return 1;
 }
 
 int sum_range(int **sheet, char *cell, char *start, char *end){
@@ -45,6 +53,8 @@ int sum_range(int **sheet, char *cell, char *start, char *end){
     cell_to_coords(cell , coords1);
     cell_to_coords(start , coords2);
     cell_to_coords(end , coords3);
+
+    if(coords2[0] > coords3[0] || coords2[1] > coords3[1]) return 0;
     int sum = 0;
     for(int i = coords2[0]; i <= coords3[0]; i++){
         for(int j = coords2[1]; j <= coords3[1]; j++){
@@ -52,6 +62,7 @@ int sum_range(int **sheet, char *cell, char *start, char *end){
         }
     }
     sheet[coords1[0]][coords1[1]] = sum;
+    return 1;
 }
 
 int avg_range(int **sheet, char *cell, char *start, char *end){
@@ -61,6 +72,9 @@ int avg_range(int **sheet, char *cell, char *start, char *end){
     cell_to_coords(cell , coords1);
     cell_to_coords(start , coords2);
     cell_to_coords(end , coords3);
+    
+    if(coords2[0] > coords3[0] || coords2[1] > coords3[1]) return 0;
+
     int sum = 0;
     int count = 0;
     for(int i = coords2[0]; i <= coords3[0]; i++){
@@ -70,6 +84,7 @@ int avg_range(int **sheet, char *cell, char *start, char *end){
         }
     }
     sheet[coords1[0]][coords1[1]] = sum/count;
+    return 1;
 }
 
 int std_dev_range(int **sheet, char *cell, char *start, char *end){
@@ -79,6 +94,9 @@ int std_dev_range(int **sheet, char *cell, char *start, char *end){
     cell_to_coords(cell , coords1);
     cell_to_coords(start , coords2);
     cell_to_coords(end , coords3);
+
+    if(coords2[0] > coords3[0] || coords2[1] > coords3[1]) return 0;
+
     int sum = 0;
     int count = 0;
     for(int i = coords2[0]; i <= coords3[0]; i++){
@@ -95,4 +113,5 @@ int std_dev_range(int **sheet, char *cell, char *start, char *end){
         }
     }
     sheet[coords1[0]][coords1[1]] = sum_sq/count;
+    return 1;
 }

@@ -58,19 +58,21 @@ int main(int argc , char** argv){
             continue;
         }
         else if (input_type == 3){
-            process_arith_expr(sheet , cell1 , cell2 , operation , cell3);
+            int flag = process_arith_expr(sheet , cell1 , cell2 , operation , cell3);
             print_sheet(sheet , 0);
             end_time = clock();
             timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-            print_status(&timed , "ok");
+            print_status(&timed , (flag == 0) ? "division by zero" : "ok");
             continue;
         }
         else if (input_type == 4){
-            process_functions(sheet , cell1 , cell2 , operation , cell3);
+            int flag = process_functions(sheet , cell1 , cell2 , operation , cell3);
             print_sheet(sheet , 0);
             end_time = clock();
             timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-            print_status(&timed , "ok");
+            if(flag == 0) print_status(&timed , "invalid range");
+            else if(flag==1) print_status(&timed , "ok");
+            else print_status(&timed , "invalid function");
             continue;
         }
         printf("%d" , input_type);

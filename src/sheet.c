@@ -126,25 +126,31 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
     if (operation[0] == '+') sheet[coords1[0]][coords1[1]] = v1 + v2;
     else if (operation[0] == '-') sheet[coords1[0]][coords1[1]] = v1 - v2;
     else if (operation[0] == '*') sheet[coords1[0]][coords1[1]] = v1 * v2;
-    else if (operation[0] == '/') sheet[coords1[0]][coords1[1]] = v1 / v2;
-    printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
+    else if (operation[0] == '/'){
+        if(v2 == 0) {
+            return 0;
+        }
+        sheet[coords1[0]][coords1[1]] = v1 / v2;
+    }
+    return 1;
 
 }
 
 int process_functions(int **sheet, char *cell, char *start, char *operation, char *end){
     if(strcmp(operation, "MIN") == 0){
-        min_range(sheet, cell, start, end);
+        return min_range(sheet, cell, start, end);
     }
     else if(strcmp(operation, "MAX") == 0){
-        max_range(sheet, cell, start, end);
+        return max_range(sheet, cell, start, end);
     }
     else if(strcmp(operation, "SUM") == 0){
-        sum_range(sheet, cell, start, end);
+        return sum_range(sheet, cell, start, end);
     }
     else if(strcmp(operation, "AVG") == 0){
-        avg_range(sheet, cell, start, end);
+        return avg_range(sheet, cell, start, end);
     }
     else if(strcmp(operation, "STDEV") == 0){
-        std_dev_range(sheet, cell, start, end);
+        return std_dev_range(sheet, cell, start, end);
     }
+    else return 2;
 }
