@@ -107,3 +107,23 @@ int process_assign_input(int** sheet, char* cell , char* value){
     }
 }
 
+int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , char *val2){
+    int coords1[2];
+    int coords2[2];
+    int coords3[2];
+    cell_to_coords(cell , coords1);
+    int v1;
+    int v2;
+
+    if(cell_to_coords(val1 , coords2) == 0) v1 = atoi(val1);
+    else v1 = sheet[coords2[0]][coords2[1]];
+
+    if(cell_to_coords(val2 , coords3) == 0) v2 = atoi(val2);
+    else v2 = sheet[coords3[0]][coords3[1]];
+    
+    if (operation[0] == '+') sheet[coords1[0]][coords1[1]] = v1 + v2;
+    else if (operation[0] == '-') sheet[coords1[0]][coords1[1]] = v1 - v2;
+    else if (operation[0] == '*') sheet[coords1[0]][coords1[1]] = v1 * v2;
+    else if (operation[0] == '/') sheet[coords1[0]][coords1[1]] = v1 / v2;
+    printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
+}

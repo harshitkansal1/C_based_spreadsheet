@@ -68,7 +68,7 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
             if (j>10) return 0; //overflow
             else return 3;
         }
-        if (!cell_to_coords(cell2 , coords)) return 0; // invalid cell
+        if (!cell_to_coords(cell3 , coords)) return 0; // invalid cell
         return 3;
     }
     if (strcmp(cell2 , "SLEEP") == 0){
