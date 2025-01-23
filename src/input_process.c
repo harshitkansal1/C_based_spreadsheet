@@ -7,7 +7,6 @@
 // three for arithmetic expression
 // four for function assignment
 int process_input(char *line  , char *cell1 , char *cell2 , char *operation , char* cell3 ){
-    printf("Processing input\n");
     int i = 0;
     int j = 0;
     int col = 0;
@@ -36,7 +35,6 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
         j++;
         i++;
     }
-    if (cell2[0] == '0') return 0; // number starts with zero
     cell2[j] = '\0';
     if (!(line[i] == '(')) {
         for (int k = 0; k < j; k++){
@@ -60,7 +58,6 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
             i++;
         }
         cell3[j] = '\0';
-        if (cell3[0] == '0') return 0; // number starts with zero
         for (int k = 0; k < j; k++){
             if (cell3[k] < '0' || cell3[k] > '9') temp = 1;
         }   
@@ -83,7 +80,6 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
         cell2[j] = '\0';
         i++;
         if (line[i] != '\0' && line[i]!= '\n') return 0;
-        if (cell2[0] == '0') return 0; // number starts with zero
         temp = 0;
         for (int k = 0; k < j; k++){
         if (cell2[k] < '0' || cell2[k] > '9') temp = 1;
