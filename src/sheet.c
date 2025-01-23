@@ -1,7 +1,9 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<functions.h>
+#include"functions.h"
 #include<string.h>
+#include"sheet.h"
+#define not !
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
@@ -43,7 +45,11 @@ int** initialize_sheet(int rows, int cols){
     for(int i = 0; i < rows; i++){
         sheet[i] = (int*) malloc(cols * sizeof(int));
     }
+
+    create_relation_graph();
+
     return sheet;
+
 }
 
 void print_sheet(int** sheet, int direction){
@@ -96,16 +102,39 @@ void process_control_input(int** sheet , char control){
     else if (control == 'd') print_sheet(sheet , 'd');
 }
 
-int process_assign_input(int** sheet, char* cell , char* value){
+void process_assign_input(int** sheet, char* cell , char* value){
     int coords1[2];
     int coords2[2];
     cell_to_coords(cell , coords1);
     if (cell_to_coords(value , coords2) == 0) {
+        find_and_modify_impactors(coords1[0],coords1[1]);
+
         sheet[coords1[0]][coords1[1]] = atoi(value);
+        relation[coords1[0]][coords1[1]].operation = 1;
+        relation[coords1[0]][coords1[1]].i1_row = atoi(value);
+        relation[coords1[0]][coords1[1]].i1_column = atoi(value);
+        relation[coords1[0]][coords1[1]].i2_row = atoi(value);
+        relation[coords1[0]][coords1[1]].i2_column = atoi(value);
+
         printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
+        
     }
     else{
+        if(not has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) )
+        {
+        find_and_modify_impactors(coords1[0],coords1[1]);
+        add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
         sheet[coords1[0]][coords1[1]] = sheet[coords2[0]][coords2[1]];
+        relation[coords1[0]][coords1[1]].operation = 2;
+        relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+        relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+        relation[coords1[0]][coords1[1]].i2_row = coords2[0];
+        relation[coords1[0]][coords1[1]].i2_column = coords2[1];
+        }
+        else
+        {
+            printf("cycle");
+        }
     }
 }
 
@@ -116,21 +145,310 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
     cell_to_coords(cell , coords1);
     int v1;
     int v2;
+    int flag = 0;
 
-    if(cell_to_coords(val1 , coords2) == 0) v1 = atoi(val1);
+    if(cell_to_coords(val1 , coords2) == 0) 
+    {
+        v1 = atoi(val1);
+        flag = 1;
+    }
     else v1 = sheet[coords2[0]][coords2[1]];
 
-    if(cell_to_coords(val2 , coords3) == 0) v2 = atoi(val2);
+    if(cell_to_coords(val2 , coords3) == 0) 
+    {
+        v2 = atoi(val2);
+        if(flag == 1 && operation[0] == '+')
+        {
+            find_and_modify_impactors(coords1[0],coords1[1]);
+
+            sheet[coords1[0]][coords1[1]] = v1 + v2;
+            relation[coords1[0]][coords1[1]].operation = 1;
+            relation[coords1[0]][coords1[1]].i1_row = -1;
+            relation[coords1[0]][coords1[1]].i1_column = -1;
+            relation[coords1[0]][coords1[1]].i2_row = -1;
+            relation[coords1[0]][coords1[1]].i2_column = -1;
+            return 1;
+        }
+        if(flag == 1 && operation[0] == '-')
+        {
+        find_and_modify_impactors(coords1[0],coords1[1]);
+            sheet[coords1[0]][coords1[1]] = v1 - v2;
+            relation[coords1[0]][coords1[1]].operation = 1;
+            relation[coords1[0]][coords1[1]].i1_row = -1;
+            relation[coords1[0]][coords1[1]].i1_column = -1;
+            relation[coords1[0]][coords1[1]].i2_row = -1;
+            relation[coords1[0]][coords1[1]].i2_column = -1;
+            return 1;
+        }
+        if(flag == 1 && operation[0] == '*')
+        {
+                    find_and_modify_impactors(coords1[0],coords1[1]);
+            sheet[coords1[0]][coords1[1]] = v1 + v2;
+            relation[coords1[0]][coords1[1]].operation = 1;
+            relation[coords1[0]][coords1[1]].i1_row = -1;
+            relation[coords1[0]][coords1[1]].i1_column = -1;
+            relation[coords1[0]][coords1[1]].i2_row = -1;
+            relation[coords1[0]][coords1[1]].i2_column = -1;
+            return 1;
+        }
+        if(flag == 1 && operation[0] == '/')
+        {
+
+            if(v2 == 0) {
+            return 0;
+            }
+            find_and_modify_impactors(coords1[0],coords1[1]);
+            sheet[coords1[0]][coords1[1]] = v1 / v2;
+
+            sheet[coords1[0]][coords1[1]] = v1 + v2;
+            relation[coords1[0]][coords1[1]].operation = 1;
+            relation[coords1[0]][coords1[1]].i1_row = -1;
+            relation[coords1[0]][coords1[1]].i1_column = -1;
+            relation[coords1[0]][coords1[1]].i2_row = -1;
+            relation[coords1[0]][coords1[1]].i2_column = -1;
+            return 1;
+        }
+        flag = 2;
+    }
     else v2 = sheet[coords3[0]][coords3[1]];
     
-    if (operation[0] == '+') sheet[coords1[0]][coords1[1]] = v1 + v2;
-    else if (operation[0] == '-') sheet[coords1[0]][coords1[1]] = v1 - v2;
-    else if (operation[0] == '*') sheet[coords1[0]][coords1[1]] = v1 * v2;
+    if (operation[0] == '+') 
+    {
+        if(flag==0)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
+            {
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);
+
+                sheet[coords1[0]][coords1[1]] = v1 + v2;
+                relation[coords1[0]][coords1[1]].operation = 12;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
+
+        if(flag==2)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
+            {
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+
+                
+                sheet[coords1[0]][coords1[1]] = v1 + v2;
+                relation[coords1[0]][coords1[1]].operation = 8;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = v2;
+                relation[coords1[0]][coords1[1]].i2_column = v2;
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
+
+        if(flag==1)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
+            {
+
+             find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);   
+                sheet[coords1[0]][coords1[1]] = v1 + v2;
+                relation[coords1[0]][coords1[1]].operation = 16;
+                relation[coords1[0]][coords1[1]].i1_row = v1;
+                relation[coords1[0]][coords1[1]].i1_column = v1;
+                relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            }
+            else{
+                printf("cycle");
+            }
+        }
+    }
+    if (operation[0] == '-') 
+    {
+        if(flag==0)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
+            {
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);
+                sheet[coords1[0]][coords1[1]] = v1 - v2;
+                relation[coords1[0]][coords1[1]].operation = 13;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            }
+            else{
+                printf("cycle");
+            }
+        }
+        if(flag==2)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
+            {
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                sheet[coords1[0]][coords1[1]] = v1 - v2;
+                relation[coords1[0]][coords1[1]].operation = 9;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = v2;
+                relation[coords1[0]][coords1[1]].i2_column = v2;
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
+        if(flag==1)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
+            {
+
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);  
+                sheet[coords1[0]][coords1[1]] = v1 - v2;
+                relation[coords1[0]][coords1[1]].operation = 17;
+                relation[coords1[0]][coords1[1]].i1_row = v1;
+                relation[coords1[0]][coords1[1]].i1_column = v1;
+                relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            }
+            else{
+                printf("cycle");
+            }
+        }
+    }
+    if (operation[0] == '*') 
+    {
+        if(flag==0)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
+            {
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);
+                sheet[coords1[0]][coords1[1]] = v1 * v2;
+                relation[coords1[0]][coords1[1]].operation = 14;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
+        if(flag==2)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
+            {
+                                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                sheet[coords1[0]][coords1[1]] = v1 * v2;
+                relation[coords1[0]][coords1[1]].operation = 10;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = v2;
+                relation[coords1[0]][coords1[1]].i2_column = v2;
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
+        if(flag==1)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
+            {
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);  
+                sheet[coords1[0]][coords1[1]] = v1 * v2;
+                relation[coords1[0]][coords1[1]].operation = 18;
+                relation[coords1[0]][coords1[1]].i1_row = v1;
+                relation[coords1[0]][coords1[1]].i1_column = v1;
+                relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
+    }
     else if (operation[0] == '/'){
         if(v2 == 0) {
             return 0;
         }
-        sheet[coords1[0]][coords1[1]] = v1 / v2;
+        if(flag==0)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
+            {
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);
+                sheet[coords1[0]][coords1[1]] = v1 / v2;
+                relation[coords1[0]][coords1[1]].operation = 15;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
+        if(flag==2)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
+            {
+                                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                sheet[coords1[0]][coords1[1]] = v1 / v2;
+                relation[coords1[0]][coords1[1]].operation = 11;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = v2;
+                relation[coords1[0]][coords1[1]].i2_column = v2;
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
+        if(flag==1)
+        {
+            if(not (has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
+            {
+                find_and_modify_impactors(coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);  
+                sheet[coords1[0]][coords1[1]] = v1 / v2;
+                relation[coords1[0]][coords1[1]].operation = 19;
+                relation[coords1[0]][coords1[1]].i1_row = v1;
+                relation[coords1[0]][coords1[1]].i1_column = v1;
+                relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            }
+            else
+            {
+                printf("cycle");
+            }
+        }
     }
     return 1;
 

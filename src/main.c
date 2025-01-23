@@ -1,9 +1,9 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<sheet.h>
+#include"sheet.h"
 #include<time.h>
 #include<string.h>
-#include<input_process.h>
+#include"input_process.h"
 
 #define MAX_SIZE 100
 void print_status(double *time , char *msg){

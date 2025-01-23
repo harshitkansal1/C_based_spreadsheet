@@ -1,6 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<sheet.h>
+#include"sheet.h"
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
@@ -22,7 +22,36 @@ int min_range(int **sheet, char *cell, char *start, char *end){
             if (sheet[i][j] < minn) minn = sheet[i][j];
         }
     }
-    sheet[coords1[0]][coords1[1]] = minn;
+    int copy_1 = relation[coords1[0]][coords1[1]].operation;
+    int copy_2 = relation[coords1[0]][coords1[1]].i1_row;
+    int copy_3 = relation[coords1[0]][coords1[1]].i1_column;
+    int copy_4 = relation[coords1[0]][coords1[1]].i2_row;
+    int copy_5 = relation[coords1[0]][coords1[1]].i2_column;
+
+
+    relation[coords1[0]][coords1[1]].operation = 3;
+    relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+    relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+    relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+    relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+
+
+    if(range_has_cycle(coords1[0],coords1[1]))
+    {
+        printf("cycle");
+        relation[coords1[0]][coords1[1]].operation = copy_1;
+        relation[coords1[0]][coords1[1]].i1_row = copy_2;
+        relation[coords1[0]][coords1[1]].i1_column = copy_3;
+        relation[coords1[0]][coords1[1]].i2_row = copy_4;
+        relation[coords1[0]][coords1[1]].i2_column = copy_5;
+
+    }
+    else
+    {
+        sheet[coords1[0]][coords1[1]] = minn;
+
+    }
+
     return 1;
 }
 
@@ -42,7 +71,36 @@ int max_range(int **sheet, char *cell, char *start, char *end){
             if (sheet[i][j] > maxx) maxx = sheet[i][j];
         }
     }
-    sheet[coords1[0]][coords1[1]] = maxx;
+
+    int copy_1 = relation[coords1[0]][coords1[1]].operation;
+    int copy_2 = relation[coords1[0]][coords1[1]].i1_row;
+    int copy_3 = relation[coords1[0]][coords1[1]].i1_column;
+    int copy_4 = relation[coords1[0]][coords1[1]].i2_row;
+    int copy_5 = relation[coords1[0]][coords1[1]].i2_column;
+
+    relation[coords1[0]][coords1[1]].operation = 4;
+    relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+    relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+    relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+    relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+
+    if(range_has_cycle(coords1[0],coords1[1]))
+    {
+        printf("cycle");
+        relation[coords1[0]][coords1[1]].operation = copy_1;
+        relation[coords1[0]][coords1[1]].i1_row = copy_2;
+        relation[coords1[0]][coords1[1]].i1_column = copy_3;
+        relation[coords1[0]][coords1[1]].i2_row = copy_4;
+        relation[coords1[0]][coords1[1]].i2_column = copy_5;
+
+    }
+    else
+    {
+        sheet[coords1[0]][coords1[1]] = maxx;
+
+    }
+
+
     return 1;
 }
 
@@ -61,7 +119,37 @@ int sum_range(int **sheet, char *cell, char *start, char *end){
             sum += sheet[i][j];
         }
     }
-    sheet[coords1[0]][coords1[1]] = sum;
+
+    int copy_1 = relation[coords1[0]][coords1[1]].operation;
+    int copy_2 = relation[coords1[0]][coords1[1]].i1_row;
+    int copy_3 = relation[coords1[0]][coords1[1]].i1_column;
+    int copy_4 = relation[coords1[0]][coords1[1]].i2_row;
+    int copy_5 = relation[coords1[0]][coords1[1]].i2_column;
+
+    relation[coords1[0]][coords1[1]].operation = 6;
+    relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+    relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+    relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+    relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+
+        if(range_has_cycle(coords1[0],coords1[1]))
+    {
+        printf("cycle");
+        relation[coords1[0]][coords1[1]].operation = copy_1;
+        relation[coords1[0]][coords1[1]].i1_row = copy_2;
+        relation[coords1[0]][coords1[1]].i1_column = copy_3;
+        relation[coords1[0]][coords1[1]].i2_row = copy_4;
+        relation[coords1[0]][coords1[1]].i2_column = copy_5;
+
+    }
+    else
+    {
+        sheet[coords1[0]][coords1[1]] = sum;
+
+
+        return 1;
+    }
+
     return 1;
 }
 
@@ -83,7 +171,37 @@ int avg_range(int **sheet, char *cell, char *start, char *end){
             count++;
         }
     }
+
+    int copy_1 = relation[coords1[0]][coords1[1]].operation;
+    int copy_2 = relation[coords1[0]][coords1[1]].i1_row;
+    int copy_3 = relation[coords1[0]][coords1[1]].i1_column;
+    int copy_4 = relation[coords1[0]][coords1[1]].i2_row;
+    int copy_5 = relation[coords1[0]][coords1[1]].i2_column;
+
+    relation[coords1[0]][coords1[1]].operation = 5;
+    relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+    relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+    relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+    relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+
+    if(range_has_cycle(coords1[0],coords1[1]))
+    {
+        printf("cycle");
+        relation[coords1[0]][coords1[1]].operation = copy_1;
+        relation[coords1[0]][coords1[1]].i1_row = copy_2;
+        relation[coords1[0]][coords1[1]].i1_column = copy_3;
+        relation[coords1[0]][coords1[1]].i2_row = copy_4;
+        relation[coords1[0]][coords1[1]].i2_column = copy_5;
+
+    }
+    else
+    {
     sheet[coords1[0]][coords1[1]] = sum/count;
+
+        find_and_modify_impactors(coords1[0],coords1[1]);
+
+    }
+
     return 1;
 }
 
@@ -112,6 +230,36 @@ int std_dev_range(int **sheet, char *cell, char *start, char *end){
             sum_sq += (sheet[i][j] - avg)*(sheet[i][j] - avg);
         }
     }
-    sheet[coords1[0]][coords1[1]] = sum_sq/count;
+
+    int copy_1 = relation[coords1[0]][coords1[1]].operation;
+    int copy_2 = relation[coords1[0]][coords1[1]].i1_row;
+    int copy_3 = relation[coords1[0]][coords1[1]].i1_column;
+    int copy_4 = relation[coords1[0]][coords1[1]].i2_row;
+    int copy_5 = relation[coords1[0]][coords1[1]].i2_column;
+
+    relation[coords1[0]][coords1[1]].operation = 7;
+    relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+    relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+    relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+    relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+
+    if(range_has_cycle(coords1[0],coords1[1]))
+    {
+        printf("cycle");
+        relation[coords1[0]][coords1[1]].operation = copy_1;
+        relation[coords1[0]][coords1[1]].i1_row = copy_2;
+        relation[coords1[0]][coords1[1]].i1_column = copy_3;
+        relation[coords1[0]][coords1[1]].i2_row = copy_4;
+        relation[coords1[0]][coords1[1]].i2_column = copy_5;
+
+    }
+    else
+    {
+        sheet[coords1[0]][coords1[1]] = sum_sq/count;
+
+        find_and_modify_impactors(coords1[0],coords1[1]);
+
+    }
+
     return 1;
 }
