@@ -234,9 +234,9 @@ int range_has_cycle(int target_row, int target_col)
 }
 
 void initialize_dependencies(int rows, int cols) {
-    dependencies = malloc(rows * sizeof(struct ImpactList*));
+    dependencies = (struct ImpactList**) malloc(rows * sizeof(struct ImpactList*));
     for (int i = 0; i < rows; i++) {
-        dependencies[i] = malloc(cols * sizeof(struct ImpactList));
+        dependencies[i] = (struct ImpactList*) malloc(cols * sizeof(struct ImpactList));
         for (int j = 0; j < cols; j++) {
             dependencies[i][j].head = NULL;
         }
@@ -244,7 +244,7 @@ void initialize_dependencies(int rows, int cols) {
 }
 
 void add_dependency(int impactor_row, int impactor_col, int impacted_row, int impacted_col) {
-    struct DependencyNode* new_node = malloc(sizeof(struct DependencyNode));
+    struct DependencyNode* new_node = (struct DependencyNode* ) malloc(sizeof(struct DependencyNode));
 
     if(new_node == NULL)
     {
@@ -259,10 +259,9 @@ void add_dependency(int impactor_row, int impactor_col, int impacted_row, int im
 
 void clear_dependency(int impactor_row, int impactor_col, int impacted_row, int impacted_col) {
     struct DependencyNode* iter = dependencies[impactor_row][impactor_col].head;
-
+    // printf("%d" , iter->row);
     if(iter->row == impacted_row && iter->col ==impacted_col)
     {
-        
         dependencies[impactor_row][impactor_col].head = iter->next;
         return;
     }
@@ -288,7 +287,6 @@ void clear_dependency(int impactor_row, int impactor_col, int impacted_row, int 
 void find_and_modify_impactors(int impacted_row, int impacted_col)
 {
     struct relation_data current_relation = relation[impacted_row][impacted_col];
-
     if(current_relation.operation == 0)
     {
         return;
@@ -301,7 +299,7 @@ void find_and_modify_impactors(int impacted_row, int impacted_col)
     {
         int row = current_relation.i2_row;
         int col = current_relation.i2_column;
-
+        // printf("%d %d" , row , col);
         clear_dependency(row,col,impacted_row,impacted_col);
     }
     if(current_relation.operation >= 8 && current_relation.operation <= 11)

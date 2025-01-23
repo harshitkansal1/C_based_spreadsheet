@@ -108,7 +108,6 @@ void process_assign_input(int** sheet, char* cell , char* value){
     cell_to_coords(cell , coords1);
     if (cell_to_coords(value , coords2) == 0) {
         find_and_modify_impactors(coords1[0],coords1[1]);
-
         sheet[coords1[0]][coords1[1]] = atoi(value);
         relation[coords1[0]][coords1[1]].operation = 1;
         relation[coords1[0]][coords1[1]].i1_row = atoi(value);
@@ -123,7 +122,7 @@ void process_assign_input(int** sheet, char* cell , char* value){
         if(not has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) )
         {
         find_and_modify_impactors(coords1[0],coords1[1]);
-        add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+        add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
         sheet[coords1[0]][coords1[1]] = sheet[coords2[0]][coords2[1]];
         relation[coords1[0]][coords1[1]].operation = 2;
         relation[coords1[0]][coords1[1]].i1_row = coords2[0];
@@ -219,8 +218,8 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
             {
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
-                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);
 
                 sheet[coords1[0]][coords1[1]] = v1 + v2;
                 relation[coords1[0]][coords1[1]].operation = 12;
@@ -240,7 +239,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
             {
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
 
                 
                 sheet[coords1[0]][coords1[1]] = v1 + v2;
@@ -262,7 +261,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             {
 
              find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);   
+                add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);   
                 sheet[coords1[0]][coords1[1]] = v1 + v2;
                 relation[coords1[0]][coords1[1]].operation = 16;
                 relation[coords1[0]][coords1[1]].i1_row = v1;
@@ -282,8 +281,8 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
             {
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
-                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);
                 sheet[coords1[0]][coords1[1]] = v1 - v2;
                 relation[coords1[0]][coords1[1]].operation = 13;
                 relation[coords1[0]][coords1[1]].i1_row = coords2[0];
@@ -300,7 +299,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
             {
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
                 sheet[coords1[0]][coords1[1]] = v1 - v2;
                 relation[coords1[0]][coords1[1]].operation = 9;
                 relation[coords1[0]][coords1[1]].i1_row = coords2[0];
@@ -319,7 +318,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             {
 
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);  
+                add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);  
                 sheet[coords1[0]][coords1[1]] = v1 - v2;
                 relation[coords1[0]][coords1[1]].operation = 17;
                 relation[coords1[0]][coords1[1]].i1_row = v1;
@@ -339,8 +338,8 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
             {
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
-                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);
                 sheet[coords1[0]][coords1[1]] = v1 * v2;
                 relation[coords1[0]][coords1[1]].operation = 14;
                 relation[coords1[0]][coords1[1]].i1_row = coords2[0];
@@ -358,7 +357,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
             {
                                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
                 sheet[coords1[0]][coords1[1]] = v1 * v2;
                 relation[coords1[0]][coords1[1]].operation = 10;
                 relation[coords1[0]][coords1[1]].i1_row = coords2[0];
@@ -376,7 +375,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
             {
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);  
+                add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);  
                 sheet[coords1[0]][coords1[1]] = v1 * v2;
                 relation[coords1[0]][coords1[1]].operation = 18;
                 relation[coords1[0]][coords1[1]].i1_row = v1;
@@ -399,8 +398,8 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
             {
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
-                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
+                add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);
                 sheet[coords1[0]][coords1[1]] = v1 / v2;
                 relation[coords1[0]][coords1[1]].operation = 15;
                 relation[coords1[0]][coords1[1]].i1_row = coords2[0];
@@ -418,7 +417,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
             {
                                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords2[0],coords2[0],coords1[0],coords1[1]);
+                add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
                 sheet[coords1[0]][coords1[1]] = v1 / v2;
                 relation[coords1[0]][coords1[1]].operation = 11;
                 relation[coords1[0]][coords1[1]].i1_row = coords2[0];
@@ -436,7 +435,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             if(not (has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
             {
                 find_and_modify_impactors(coords1[0],coords1[1]);
-                add_dependency(coords3[0],coords3[0],coords1[0],coords1[1]);  
+                add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);  
                 sheet[coords1[0]][coords1[1]] = v1 / v2;
                 relation[coords1[0]][coords1[1]].operation = 19;
                 relation[coords1[0]][coords1[1]].i1_row = v1;

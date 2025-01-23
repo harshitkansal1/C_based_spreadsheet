@@ -25,7 +25,6 @@ int has_cycle(int target_row, int target_col, int current_row, int current_col) 
 
 int range_has_cycle(int target_row, int target_col);
 
-
 struct DependencyNode {
     int row;
     int col;
