@@ -8,7 +8,7 @@
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
-int ROWS , COLS , origin_x , origin_y;
+int ROWS , COLS , origin_x , origin_y , enable;
 
 int cell_to_coords(char *cell , int* coords){
     int i = 0;
@@ -41,6 +41,7 @@ int cell_to_coords(char *cell , int* coords){
 int** initialize_sheet(int rows, int cols){
     ROWS = rows;
     COLS = cols;
+    enable = 1;
     int** sheet = (int**) malloc(rows * sizeof(int*));
     for(int i = 0; i < rows; i++){
         sheet[i] = (int*) malloc(cols * sizeof(int));
@@ -54,7 +55,7 @@ int** initialize_sheet(int rows, int cols){
 
 void print_sheet(int** sheet, int direction){
     if (direction == 's') {
-        if (ROWS >= origin_y+11) origin_y+=1;
+        if (ROWS >= origin_y+2) origin_y+=1;
     }
     else if (direction == 'w'){
         origin_y = max(origin_y -1 , 0);
@@ -63,7 +64,7 @@ void print_sheet(int** sheet, int direction){
         origin_x = max(0 , origin_x-1);
     }
     else if (direction == 'd'){
-        if (COLS >= origin_x+11) origin_x+=1;
+        if (COLS >= origin_x+2) origin_x+=1;
     }
     printf("\t");
     for (int i = origin_x; i< min(origin_x+10 , COLS); i++){
@@ -92,14 +93,23 @@ void print_sheet(int** sheet, int direction){
     }
 }
 
-void process_control_input(int** sheet , char control){
-    if (control == 'q') {
+void process_control_input(int** sheet , char* control){                                                                                                                           
+    if (control[0] == 'q') {
         exit(0);
     }
-    else if (control == 's') print_sheet(sheet , 's');
-    else if (control == 'w') print_sheet(sheet , 'w');
-    else if (control == 'a') print_sheet(sheet , 'a');
-    else if (control == 'd') print_sheet(sheet , 'd');
+    else if (strcmp(control , "enable_output") == 0) enable = 1;
+    else if (strcmp(control , "disable_output") == 0) {enable = 0; printf("output disabled\n");}
+    else if (control[0] == 's' && enable) print_sheet(sheet , 's');
+    else if (control[0] == 'w' && enable) print_sheet(sheet , 'w');
+    else if (control[0] == 'a' && enable) print_sheet(sheet , 'a');
+    else if (control[0] == 'd' && enable) print_sheet(sheet , 'd');
+    else {
+        int coords[2];
+        cell_to_coords(control , coords);
+        origin_x = coords[1];
+        origin_y = coords[0];
+        if (enable) print_sheet(sheet , 0);
+    }
 }
 
 void process_assign_input(int** sheet, char* cell , char* value){
@@ -181,8 +191,8 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
         }
         if(flag == 1 && operation[0] == '*')
         {
-                    find_and_modify_impactors(coords1[0],coords1[1]);
-            sheet[coords1[0]][coords1[1]] = v1 + v2;
+            find_and_modify_impactors(coords1[0],coords1[1]);
+            sheet[coords1[0]][coords1[1]] = v1 * v2;
             relation[coords1[0]][coords1[1]].operation = 1;
             relation[coords1[0]][coords1[1]].i1_row = -1;
             relation[coords1[0]][coords1[1]].i1_column = -1;
@@ -198,8 +208,6 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             }
             find_and_modify_impactors(coords1[0],coords1[1]);
             sheet[coords1[0]][coords1[1]] = v1 / v2;
-
-            sheet[coords1[0]][coords1[1]] = v1 + v2;
             relation[coords1[0]][coords1[1]].operation = 1;
             relation[coords1[0]][coords1[1]].i1_row = -1;
             relation[coords1[0]][coords1[1]].i1_column = -1;

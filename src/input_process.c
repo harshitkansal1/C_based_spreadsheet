@@ -13,12 +13,32 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
     int row = 0;
     int coords[2];
     int temp = 0;
-    while (line[i] != '\0'){
-        if (line[i] == ' ') return 0;
-        i++;
-    }   
     if (line[2] == '\0'){
         if (line[0] == 'q' || line[0] == 's' || line[0] == 'w' || line[0] == 'a' || line[0] == 'd') {operation[0] = line[0]; operation[1] = '\0'; return 1;}
+        else return 0;
+    }
+    while (line[i] != '\0' && line[i] != ' ' && line[i] != '\n'){
+        operation[i] = line[i];
+        i++;
+    }   
+    operation[i] = '\0';
+    if (line[i] == '\0' || line[i] == '\n'){ 
+        if (strcmp(operation , "enable_output") == 0) return 1;
+        else if (strcmp(operation , "disable_output") == 0) return 1;
+    }
+    else {
+        if (strcmp(operation , "scroll_to") == 0){
+            i++;
+            while (line[i] != '\0' && line[i] != '\n'){
+                operation[j] = line[i];
+                j++;
+                i++;
+            }
+            operation[j] = '\0';
+            j = 0;
+            if (!cell_to_coords(operation, coords)) return 0;
+            else return 1;
+        }
         else return 0;
     }
     i = 0;
@@ -30,6 +50,7 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
     cell1[i] = '\0';
     if (!cell_to_coords(cell1 , coords)) return 0;
     i++;
+    if (line[i] == '-') {cell2[0] = '-'; j++; i++;}
     while (line[i] != '\0' && line[i] != '+' && line[i] != '-' && line[i] != '*' && line[i] != '/' && line[i] != '(' && line[i]!='\n'){
         cell2[j] = line[i];
         j++;
@@ -37,11 +58,17 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
     }
     cell2[j] = '\0';
     if (!(line[i] == '(')) {
-        for (int k = 0; k < j; k++){
-        if (cell2[k] < '0' || cell2[k] > '9') temp = 1;
+        int k;
+        if (cell2[0] == '-'){
+            k = 1;
+        }
+        else k = 0;
+        for ( ;k < j; k++){
+        
+        if (cell2[k] < '0' || cell2[k] > '9' )  temp = 1;
     }   
     if (temp == 0){
-        if (j>10) return 0; //overflow
+        if (j>11) return 0; //overflow
     }
     if (!cell_to_coords(cell2 , coords) && temp) return 0; // invalid cell
     }
@@ -58,11 +85,15 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
             i++;
         }
         cell3[j] = '\0';
-        for (int k = 0; k < j; k++){
+        int k;
+        if (cell3[0] == '-'){
+            k = 1;
+        }else k = 0;
+        for (; k < j; k++){
             if (cell3[k] < '0' || cell3[k] > '9') temp = 1;
         }   
         if (temp == 0){
-            if (j>10) return 0; //overflow
+            if (j>11) return 0; //overflow
         }
         if (!cell_to_coords(cell3 , coords) && temp) return 0; // invalid cell
         return 3;
