@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src"
             ],
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "/usr/bin/clang++",
             "cStandard": "${default}",
             "cppStandard": "${default}",
             "intelliSenseMode": "linux-gcc-x64",

@@ -25,18 +25,20 @@ int has_cycle(int target_row, int target_col, int current_row, int current_col) 
 
 int range_has_cycle(int target_row, int target_col);
 
-struct DependencyNode {
+struct AVLNode {
     int row;
     int col;
-    struct DependencyNode* next;
+    int height;
+    struct AVLNode* left;
+    struct AVLNode* right;
 };
 
-struct ImpactList {
-    struct DependencyNode* head;
+// Represents the root of the AVL tree for a cell
+struct AVLTree {
+    struct AVLNode* root;
 };
 
-
-extern struct ImpactList** dependencies;
+extern struct AVLTree** dependencies;
 
 void initialize_dependencies(int rows, int cols);
 
