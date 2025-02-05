@@ -20,19 +20,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "functions.h"
+#include "recalculations.h"
 #include "sheet.h"
 
 struct relation_data** relation;
 struct AVLTree** dependencies;
-
 
 // Function to create a relation graph dynamically
 void create_relation_graph(void) {
     // Allocate memory for an array of pointers (for rows)
     relation = (struct relation_data**)malloc(ROWS * sizeof(struct relation_data*));
     
-   
-
     // Allocate memory for each row
     for (int i = 0; i < ROWS; ++i) {
         relation[i] = (struct relation_data*)malloc(COLS * sizeof(struct relation_data));
@@ -50,9 +48,7 @@ void create_relation_graph(void) {
         
         }
     }
-
     initialize_dependencies(ROWS,COLS);
-    
 
 }
 

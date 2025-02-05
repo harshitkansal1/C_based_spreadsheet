@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include"sheet.h"
-
+#include"recalculations.h"
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
