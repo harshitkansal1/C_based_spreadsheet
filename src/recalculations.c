@@ -387,7 +387,18 @@ struct AVLNode* delete_avl(struct AVLNode* root, int row, int col) {
 
     return root;
 }
-
+void traverseavl(struct AVLNode* root , struct AVLNode* list)
+{
+    if(root == NULL)
+    {
+        return ;
+    }
+    traverseavl(root->left , list);
+    *list = *root;
+    list++;
+    traverseavl(root->right , list);
+    return;
+}
 
 void initialize_dependencies(int rows, int cols) {
     dependencies = (struct AVLTree**)malloc(rows * sizeof(struct AVLTree*));
@@ -472,4 +483,94 @@ void find_and_modify_impactors(int impacted_row, int impacted_col) {
         }
         free(pointer);
     }
+}
+
+void toposort(int row, int col, int* visited, int* stack, int* stack_index) {
+    visited[row * COLS + col] = 1;
+
+    struct AVLNode* current = dependencies[row][col].root;
+    struct AVLNode* list = (struct AVLNode*) malloc(ROWS * COLS * sizeof(struct AVLNode));
+    struct AVLNode* list_head = list;
+    traverseavl(current , list);
+    while (list_head != NULL) {
+        int next_row = list_head->row;
+        int next_col = list_head->col;
+        if (!visited[next_row * COLS + next_col]) {
+            toposort(next_row, next_col, visited, stack, stack_index);
+        }
+        list_head++;
+    }
+    free(list);
+    stack[(*stack_index)++] = row * COLS + col;
+}
+
+void recalculate(int row , int col , int** sheet){
+    int *visited = (int*)malloc(ROWS * COLS * sizeof(int));
+    int *stack = (int*)malloc(ROWS * COLS * sizeof(int));
+    int *stack_index;
+    *stack_index = 0;
+    for(int i = 0; i < ROWS; i++){
+        for(int j = 0; j < COLS; j++){
+            visited[i * COLS + j] = 0;
+        }
+    }
+    for(int i = 0; i < ROWS; i++){
+        for(int j = 0; j < COLS; j++){
+            stack[i * COLS + j] = -1;
+        }
+    }
+    toposort(row, col, visited, stack, stack_index);
+    for (int i = *stack_index -1; i>=0; i--){
+        int current_row = stack[i] / COLS;
+        int current_col = stack[i] % COLS;
+        if (relation[current_row][current_col].operation == 0){
+            continue;
+        }
+        if (relation[current_row][current_col].operation == 1){
+            continue;
+        }
+        if (relation[current_row][current_col].operation == 2){
+            int row = relation[current_row][current_col].i2_row;
+            int col = relation[current_row][current_col].i2_column;
+            sheet[current_row][current_col] = sheet[row][col];
+            continue;
+        }
+        if (relation[current_row][current_col].operation >= 3 && relation[current_row][current_col].operation <= 7){
+            int range_count_val;
+            int* range_count = &range_count_val;
+            int coord1[] = {relation[current_row][current_col].i1_row, relation[current_row][current_col].i1_column};
+            int coord2[] = {relation[current_row][current_col].i2_row, relation[current_row][current_col].i2_column};
+            int** pointer = get_range_cells(coord1, coord2, range_count);
+            int sum = 0;
+            for (int i = 0; i < *range_count; i++){
+                sum += sheet[pointer[i][0]][pointer[i][1]];
+            }
+            if (relation[current_row][current_col].operation == 3){
+                sheet[current_row][current_col] = min(sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column], sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column]);
+            }
+            if (relation[current_row][current_col].operation == 4){
+                sheet[current_row][current_col] = max(sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column], sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column]);
+            }
+            if (relation[current_row][current_col].operation == 5){
+                sheet[current_row][current_col] = sum / *range_count;
+            }
+            if (relation[current_row][current_col].operation == 6){
+                sheet[current_row][current_col] = sum;
+            }
+            if (relation[current_row][current_col].operation == 7){
+                int avg = sum / *range_count;
+                int sum_sq = 0;
+                for (int i = 0; i < *range_count; i++){
+                    sum_sq += (sheet[pointer[i][0]][pointer[i][1]] - avg) * (sheet[pointer[i][0]][pointer[i][1]] - avg);
+                }
+                sheet[current_row][current_col] = sum_sq / *range_count;
+            }
+            for (int i = 0; i < *range_count; i++){
+                free(pointer[i]);
+            }
+            free(pointer);
+            continue;
+
+    }
+}
 }
