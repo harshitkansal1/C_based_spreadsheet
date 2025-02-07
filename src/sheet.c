@@ -56,16 +56,16 @@ int** initialize_sheet(int rows, int cols){
 
 void print_sheet(int** sheet, int direction){
     if (direction == 's') {
-        if (ROWS >= origin_y+2) origin_y+=1;
+        if (ROWS >= origin_y+11) origin_y+=10;
     }
     else if (direction == 'w'){
-        origin_y = max(origin_y -1 , 0);
+        origin_y = max(origin_y -10 , 0);
     }
     else if (direction == 'a'){
-        origin_x = max(0 , origin_x-1);
+        origin_x = max(0 , origin_x-10);
     }
     else if (direction == 'd'){
-        if (COLS >= origin_x+2) origin_x+=1;
+        if (COLS >= origin_x+11) origin_x+=10;
     }
     printf("\t");
     for (int i = origin_x; i< min(origin_x+10 , COLS); i++){
@@ -126,7 +126,7 @@ void process_assign_input(int** sheet, char* cell , char* value){
         relation[coords1[0]][coords1[1]].i2_row = -1;
         relation[coords1[0]][coords1[1]].i2_column = -1;
 
-        printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
+        // printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
         
     }
     else{
