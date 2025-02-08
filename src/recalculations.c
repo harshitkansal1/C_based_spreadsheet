@@ -23,6 +23,10 @@
 #include "recalculations.h"
 #include "sheet.h"
 
+#define min(x, y) ((x) < (y) ? (x) : (y))
+#define max(x, y) ((x) > (y) ? (x) : (y))
+
+
 struct relation_data** relation;
 struct AVLTree** dependencies;
 
