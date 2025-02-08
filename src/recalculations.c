@@ -41,10 +41,10 @@ void create_relation_graph(void) {
     for (int i = 0; i < ROWS; ++i) {
         for (int j = 0; j < COLS; ++j) {
             relation[i][j].operation = 0; // Initialize operation or other fields if needed
-            relation[i][j].i1_row = 0;
-            relation[i][j].i1_column = 0;
-            relation[i][j].i2_row = 0;
-            relation[i][j].i2_column = 0;         
+            relation[i][j].i1_row = -1;
+            relation[i][j].i1_column = -1;
+            relation[i][j].i2_row = -1;
+            relation[i][j].i2_column = -1;         
         
         }
     }
@@ -387,17 +387,16 @@ struct AVLNode* delete_avl(struct AVLNode* root, int row, int col) {
 
     return root;
 }
-void traverseavl(struct AVLNode* root , struct AVLNode* list)
+int traverseavl(struct AVLNode* root , struct AVLNode** list)
 {
     if(root == NULL)
     {
-        return ;
+        return 0;
     }
-    traverseavl(root->left , list);
-    *list = *root;
-    list++;
-    traverseavl(root->right , list);
-    return;
+    **list = *root;
+    (*list)++;
+    return 1 + traverseavl(root->left , list) + traverseavl(root->right , list);
+    ;
 }
 
 void initialize_dependencies(int rows, int cols) {
@@ -418,7 +417,7 @@ void clear_dependency(int impactor_row, int impactor_col, int impacted_row, int 
     dependencies[impactor_row][impactor_col].root = delete_avl(dependencies[impactor_row][impactor_col].root, impacted_row, impacted_col);
 }
 
-void find_and_modify_impactors(int impacted_row, int impacted_col) {
+void delete_dependencies(int impacted_row, int impacted_col) {
     struct relation_data current_relation = relation[impacted_row][impacted_col];
     
     // No operation
@@ -484,6 +483,72 @@ void find_and_modify_impactors(int impacted_row, int impacted_col) {
         free(pointer);
     }
 }
+void add_dependencies(int impacted_row, int impacted_col){
+    struct relation_data current_relation = relation[impacted_row][impacted_col];
+    
+    // No operation
+    if (current_relation.operation == 0 || current_relation.operation == 1) {
+        return;
+    }
+
+    // Single dependency case
+    if (current_relation.operation == 2) {
+        int row = current_relation.i2_row;
+        int col = current_relation.i2_column;
+        add_dependency(row, col, impacted_row, impacted_col);
+    }
+
+    // Single dependency case with i1
+    if (current_relation.operation >= 8 && current_relation.operation <= 11) {
+        int row = current_relation.i1_row;
+        int col = current_relation.i1_column;
+        add_dependency(row, col, impacted_row, impacted_col);
+    }
+
+    // Single dependency case with i2
+    if (current_relation.operation >= 16 && current_relation.operation <= 19) {
+        int row = current_relation.i2_row;
+        int col = current_relation.i2_column;
+        add_dependency(row, col, impacted_row, impacted_col);
+    }
+
+    // Double dependency case
+    if (current_relation.operation >= 12 && current_relation.operation <= 15) {
+        int row1 = current_relation.i1_row;
+        int col1 = current_relation.i1_column;
+        int row2 = current_relation.i2_row;
+        int col2 = current_relation.i2_column;
+        add_dependency(row1, col1, impacted_row, impacted_col);
+        add_dependency(row2, col2, impacted_row, impacted_col);
+    }
+
+    // Range of dependencies
+    if (current_relation.operation >= 3 && current_relation.operation <= 7) {
+        int range_count_val;
+        int* range_count = &range_count_val;
+
+        int coord1[] = {current_relation.i1_row, current_relation.i1_column};
+        int coord2[] = {current_relation.i2_row, current_relation.i2_column};
+
+        int** pointer = get_range_cells(coord1, coord2, range_count);
+
+        if (pointer == NULL) {
+            printf("Malloc error\n");
+            return;
+        }
+
+        for (int i = 0; i < *range_count; i++) {
+            add_dependency(pointer[i][0], pointer[i][1], impacted_row, impacted_col);
+        }
+
+        // Free memory used for range coordinates
+        int total_cells = *range_count;
+        for (int i = 0; i < total_cells; i++) {
+            free(pointer[i]);
+        }
+        free(pointer);
+    }
+}
 
 void toposort(int row, int col, int* visited, int* stack, int* stack_index) {
     visited[row * COLS + col] = 1;
@@ -491,8 +556,9 @@ void toposort(int row, int col, int* visited, int* stack, int* stack_index) {
     struct AVLNode* current = dependencies[row][col].root;
     struct AVLNode* list = (struct AVLNode*) malloc(ROWS * COLS * sizeof(struct AVLNode));
     struct AVLNode* list_head = list;
-    traverseavl(current , list);
-    while (list_head != NULL) {
+    int size = traverseavl(current , &list);
+    list = list_head;
+    for (int i = 0; i<size; i++){
         int next_row = list_head->row;
         int next_col = list_head->col;
         if (!visited[next_row * COLS + next_col]) {
@@ -507,7 +573,7 @@ void toposort(int row, int col, int* visited, int* stack, int* stack_index) {
 void recalculate(int row , int col , int** sheet){
     int *visited = (int*)malloc(ROWS * COLS * sizeof(int));
     int *stack = (int*)malloc(ROWS * COLS * sizeof(int));
-    int *stack_index;
+    int *stack_index = (int*)malloc(sizeof(int));;
     *stack_index = 0;
     for(int i = 0; i < ROWS; i++){
         for(int j = 0; j < COLS; j++){
@@ -536,41 +602,80 @@ void recalculate(int row , int col , int** sheet){
             continue;
         }
         if (relation[current_row][current_col].operation >= 3 && relation[current_row][current_col].operation <= 7){
-            int range_count_val;
-            int* range_count = &range_count_val;
             int coord1[] = {relation[current_row][current_col].i1_row, relation[current_row][current_col].i1_column};
             int coord2[] = {relation[current_row][current_col].i2_row, relation[current_row][current_col].i2_column};
-            int** pointer = get_range_cells(coord1, coord2, range_count);
-            int sum = 0;
-            for (int i = 0; i < *range_count; i++){
-                sum += sheet[pointer[i][0]][pointer[i][1]];
-            }
+            int cur_coords[] = {current_row, current_col};
+            char cell1[10];
+            char cell2[10];
+            char cur_cell[10];
+            coords_to_cell(coord1, cell1);
+            coords_to_cell(coord2, cell2);
+            coords_to_cell(cur_coords, cur_cell);
             if (relation[current_row][current_col].operation == 3){
-                sheet[current_row][current_col] = min(sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column], sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column]);
+                min_range(sheet , cur_cell, cell1, cell2);
             }
             if (relation[current_row][current_col].operation == 4){
-                sheet[current_row][current_col] = max(sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column], sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column]);
+                max_range(sheet , cur_cell, cell1, cell2);
             }
             if (relation[current_row][current_col].operation == 5){
-                sheet[current_row][current_col] = sum / *range_count;
+                avg_range(sheet , cur_cell, cell1, cell2);
             }
             if (relation[current_row][current_col].operation == 6){
-                sheet[current_row][current_col] = sum;
+                sum_range(sheet , cur_cell, cell1, cell2);
             }
             if (relation[current_row][current_col].operation == 7){
-                int avg = sum / *range_count;
-                int sum_sq = 0;
-                for (int i = 0; i < *range_count; i++){
-                    sum_sq += (sheet[pointer[i][0]][pointer[i][1]] - avg) * (sheet[pointer[i][0]][pointer[i][1]] - avg);
-                }
-                sheet[current_row][current_col] = sum_sq / *range_count;
+                std_dev_range(sheet , cur_cell, cell1, cell2);
             }
-            for (int i = 0; i < *range_count; i++){
-                free(pointer[i]);
-            }
-            free(pointer);
             continue;
-
     }
+    if (relation[current_row][current_col].operation >= 8 && relation[current_row][current_col].operation <= 11){
+        if (relation[current_row][current_col].operation == 8){
+            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] + relation[current_row][current_col].i2_row;
+        }
+        if (relation[current_row][current_col].operation == 9){
+            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] - relation[current_row][current_col].i2_row;
+        }
+        if (relation[current_row][current_col].operation == 10){
+            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] * relation[current_row][current_col].i2_row;
+        }
+        if (relation[current_row][current_col].operation == 11){
+            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] / relation[current_row][current_col].i2_row;
+        }
+        continue;
+    }
+    if (relation[current_row][current_col].operation >= 12 && relation[current_row][current_col].operation <= 15){
+        if (relation[current_row][current_col].operation == 12){
+            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] + sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+        }
+        if (relation[current_row][current_col].operation == 13){
+            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] - sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+        }
+        if (relation[current_row][current_col].operation == 14){
+            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] * sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+        }
+        if (relation[current_row][current_col].operation == 15){
+            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] / sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+        }
+        continue;
+    }
+    if (relation[current_row][current_col].operation >= 16 && relation[current_row][current_col].operation <= 19){
+        if (relation[current_row][current_col].operation == 16){
+            sheet[current_row][current_col] = relation[current_row][current_col].i1_row + sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+        }
+        if (relation[current_row][current_col].operation == 17){
+            sheet[current_row][current_col] = relation[current_row][current_col].i1_row - sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+        }
+        if (relation[current_row][current_col].operation == 18){
+            sheet[current_row][current_col] = relation[current_row][current_col].i1_row * sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+        }
+        if (relation[current_row][current_col].operation == 19){
+            sheet[current_row][current_col] = relation[current_row][current_col].i1_row / sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+        }
+        continue;
+    }
+    }
+    free(visited);
+    free(stack);
+    
 }
-}
+

@@ -31,6 +31,9 @@ void initialize_dependencies(int rows, int cols);
 
 void add_dependency(int impactor_row, int impactor_col, int impacted_row, int impacted_col);
 
-void find_and_modify_impactors(int impacted_row, int impacted_col);
+void delete_dependencies(int impacted_row, int impacted_col);
+void add_dependencies(int , int);
 
 int** get_range_cells(int *start_coords, int *end_coords, int *range_count);
+
+void recalculate(int , int , int** );

@@ -1,6 +1,7 @@
 #ifndef SHEET_H
 #define SHEET_H
 
+void coords_to_cell(int* , char*);
 int cell_to_coords(char*  , int*);
 int** initialize_sheet(int, int);
 void print_sheet(int** , int);

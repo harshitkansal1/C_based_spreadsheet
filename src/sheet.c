@@ -3,7 +3,7 @@
 #include"functions.h"
 #include<string.h>
 #include"sheet.h"
-#include<recalculations.h>
+#include"recalculations.h"
 #define not !
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
@@ -37,6 +37,32 @@ int cell_to_coords(char *cell , int* coords){
     coords[0] = row-1;
     coords[1] = col-1;
     return 1;
+}
+void coords_to_cell(int* coords , char* cell){
+    int col = coords[1]+1;
+    int row = coords[0]+1;
+    int i = 0;
+    while (col > 0){
+        cell[i] = 'A' + (col-1)%26;
+        col = (col-1)/26;
+        i++;
+    }
+    int i2 = i;
+    int j = 0;
+    while (i2 > j){
+        char temp = cell[j];
+        cell[j] = cell[i2-1];
+        cell[i2-1] = temp;
+        i2--;
+        j++;
+    }
+
+    while (row > 0){
+        cell[i] = (row%10) + '0';
+        row = row/10;
+        i++;
+    }
+    cell[i] = '\0';
 }
 
 int** initialize_sheet(int rows, int cols){
@@ -118,28 +144,29 @@ void process_assign_input(int** sheet, char* cell , char* value){
     int coords2[2];
     cell_to_coords(cell , coords1);
     if (cell_to_coords(value , coords2) == 0) {
-        find_and_modify_impactors(coords1[0],coords1[1]);
+        delete_dependencies(coords1[0],coords1[1]);
         sheet[coords1[0]][coords1[1]] = atoi(value);
         relation[coords1[0]][coords1[1]].operation = 1;
         relation[coords1[0]][coords1[1]].i1_row = -1;
         relation[coords1[0]][coords1[1]].i1_column = -1;
         relation[coords1[0]][coords1[1]].i2_row = -1;
         relation[coords1[0]][coords1[1]].i2_column = -1;
-
+        recalculate(coords1[0],coords1[1],sheet);
         printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
         
     }
     else{
         if(not has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) )
         {
-        find_and_modify_impactors(coords1[0],coords1[1]);
-        add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
+        delete_dependencies(coords1[0],coords1[1] );
         sheet[coords1[0]][coords1[1]] = sheet[coords2[0]][coords2[1]];
         relation[coords1[0]][coords1[1]].operation = 2;
         relation[coords1[0]][coords1[1]].i1_row = coords2[0];
         relation[coords1[0]][coords1[1]].i1_column = coords2[1];
         relation[coords1[0]][coords1[1]].i2_row = coords2[0];
         relation[coords1[0]][coords1[1]].i2_column = coords2[1];
+        add_dependencies(coords1[0],coords1[1]);
+        recalculate(coords1[0],coords1[1],sheet);
         }
         else
         {
@@ -168,7 +195,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
     {
         v2 = atoi(val2);
         if (flag == 1){
-            find_and_modify_impactors(coords1[0],coords1[1]);
+            delete_dependencies(coords1[0],coords1[1] );
             if (operation[0] == '+') sheet[coords1[0]][coords1[1]] = v1 + v2;
             else if (operation[0] == '-') sheet[coords1[0]][coords1[1]] = v1 - v2;
             else if (operation[0] == '*') sheet[coords1[0]][coords1[1]] = v1 * v2;
@@ -181,6 +208,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             relation[coords1[0]][coords1[1]].i1_column = -1;
             relation[coords1[0]][coords1[1]].i2_row = -1;
             relation[coords1[0]][coords1[1]].i2_column = -1;
+            recalculate(coords1[0],coords1[1],sheet);
             return 1;
         }
         flag = 2;
@@ -190,9 +218,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
     {
         if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) || has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
         {
-            find_and_modify_impactors(coords1[0],coords1[1]);
-            add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
-            add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);
+            delete_dependencies(coords1[0],coords1[1]);
             if (operation[0] == '+') {sheet[coords1[0]][coords1[1]] = v1 + v2; relation[coords1[0]][coords1[1]].operation = 12;}
         else if (operation[0] == '-') {sheet[coords1[0]][coords1[1]] = v1 - v2; relation[coords1[0]][coords1[1]].operation = 13;}
         else if (operation[0] == '*') {sheet[coords1[0]][coords1[1]] = v1 * v2; relation[coords1[0]][coords1[1]].operation = 14;}
@@ -205,6 +231,8 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             relation[coords1[0]][coords1[1]].i1_column = coords2[1];
             relation[coords1[0]][coords1[1]].i2_row = coords3[0];
             relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            add_dependencies(coords1[0],coords1[1]);
+            recalculate(coords1[0],coords1[1] , sheet);
         }
         else
         {
@@ -216,8 +244,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
     {
         if(not (has_cycle(coords1[0], coords1[1], coords2[0], coords2[1])))
         {
-            find_and_modify_impactors(coords1[0],coords1[1]);
-            add_dependency(coords2[0],coords2[1],coords1[0],coords1[1]);
+            delete_dependencies(coords1[0],coords1[1]);
             if (operation[0] == '+') {sheet[coords1[0]][coords1[1]] = v1 + v2; relation[coords1[0]][coords1[1]].operation = 8;}
         else if (operation[0] == '-') {sheet[coords1[0]][coords1[1]] = v1 - v2; relation[coords1[0]][coords1[1]].operation = 9;}
         else if (operation[0] == '*') {sheet[coords1[0]][coords1[1]] = v1 * v2; relation[coords1[0]][coords1[1]].operation = 10;}
@@ -230,6 +257,8 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             relation[coords1[0]][coords1[1]].i1_column = coords2[1];
             relation[coords1[0]][coords1[1]].i2_row = v2;
             relation[coords1[0]][coords1[1]].i2_column = v2;
+            add_dependencies(coords1[0],coords1[1]);
+            recalculate(coords1[0],coords1[1] , sheet);
         }
         else
         {
@@ -242,8 +271,7 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
         if(not (has_cycle(coords1[0], coords1[1], coords3[0], coords3[1])))
         {
 
-            find_and_modify_impactors(coords1[0],coords1[1]);
-            add_dependency(coords3[0],coords3[1],coords1[0],coords1[1]);   
+            delete_dependencies(coords1[0],coords1[1]);
             if (operation[0] == '+') {sheet[coords1[0]][coords1[1]] = v1 + v2; relation[coords1[0]][coords1[1]].operation = 16;}
         else if (operation[0] == '-') {sheet[coords1[0]][coords1[1]] = v1 - v2; relation[coords1[0]][coords1[1]].operation = 17;}
         else if (operation[0] == '*') {sheet[coords1[0]][coords1[1]] = v1 * v2; relation[coords1[0]][coords1[1]].operation = 18;}
@@ -256,6 +284,8 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             relation[coords1[0]][coords1[1]].i1_column = v1;
             relation[coords1[0]][coords1[1]].i2_row = coords3[0];
             relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+            add_dependencies(coords1[0],coords1[1]);
+            recalculate(coords1[0],coords1[1] , sheet);
         }
         else{
             printf("cycle");
@@ -265,20 +295,61 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
 }
 
 int process_functions(int **sheet, char *cell, char *start, char *operation, char *end){
-    if(strcmp(operation, "MIN") == 0){
-        return min_range(sheet, cell, start, end);
+    if (strcmp(operation  , "SLEEP") == 0) {;}
+    else {
+    int coords1[2];
+    int coords2[2];
+    int coords3[2];
+    cell_to_coords(cell , coords1);
+    cell_to_coords(start , coords2);
+    cell_to_coords(end , coords3);
+    if(coords2[0] > coords3[0] || coords2[1] > coords3[1]) return 0;
+    int copy_1 = relation[coords1[0]][coords1[1]].operation;
+    int copy_2 = relation[coords1[0]][coords1[1]].i1_row;
+    int copy_3 = relation[coords1[0]][coords1[1]].i1_column;
+    int copy_4 = relation[coords1[0]][coords1[1]].i2_row;
+    int copy_5 = relation[coords1[0]][coords1[1]].i2_column;
+    delete_dependencies(coords1[0] , coords1[1]);
+    relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+    relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+    relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+    relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+    if(range_has_cycle(coords1[0],coords1[1]))
+    {
+        printf("cycle");
+        relation[coords1[0]][coords1[1]].operation = copy_1;
+        relation[coords1[0]][coords1[1]].i1_row = copy_2;
+        relation[coords1[0]][coords1[1]].i1_column = copy_3;
+        relation[coords1[0]][coords1[1]].i2_row = copy_4;
+        relation[coords1[0]][coords1[1]].i2_column = copy_5;
+        add_dependencies(coords1[0],coords1[1]);
+    }
+    else
+    {  
+        if(strcmp(operation, "MIN") == 0){
+        relation[coords1[0]][coords1[1]].operation = 3;
+        min_range(sheet, cell, start, end);
     }
     else if(strcmp(operation, "MAX") == 0){
-        return max_range(sheet, cell, start, end);
+        relation[coords1[0]][coords1[1]].operation = 4;
+        max_range(sheet, cell, start, end);
     }
     else if(strcmp(operation, "SUM") == 0){
-        return sum_range(sheet, cell, start, end);
+        relation[coords1[0]][coords1[1]].operation = 6;
+        sum_range(sheet, cell, start, end);
     }
     else if(strcmp(operation, "AVG") == 0){
-        return avg_range(sheet, cell, start, end);
+        relation[coords1[0]][coords1[1]].operation = 5;
+        avg_range(sheet, cell, start, end);
     }
     else if(strcmp(operation, "STDEV") == 0){
-        return std_dev_range(sheet, cell, start, end);
+        relation[coords1[0]][coords1[1]].operation = 7;
+        std_dev_range(sheet, cell, start, end);
     }
     else return 2;
+    add_dependencies(coords1[0],coords1[1]);
+    recalculate(coords1[0],coords1[1] , sheet);
+    return 1;
+    }
+    }
 }
