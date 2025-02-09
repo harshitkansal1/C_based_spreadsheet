@@ -295,7 +295,42 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
 }
 
 int process_functions(int **sheet, char *cell, char *start, char *operation, char *end){
-    if (strcmp(operation  , "SLEEP") == 0) {;}
+    if (strcmp(operation  , "SLEEP") == 0) {
+        int coords1[2];
+        int coords2[2];
+        cell_to_coords(cell , coords1);
+        if (cell_to_coords(start , coords2) == 0){
+            int value = atoi(start);
+            delete_dependencies(coords1[0],coords1[1]);
+            if (value < 0) return 0;
+            relation[coords1[0]][coords1[1]].operation = 1;
+            relation[coords1[0]][coords1[1]].i1_row = -1;
+            relation[coords1[0]][coords1[1]].i1_column = -1;
+            relation[coords1[0]][coords1[1]].i2_row = -1;
+            relation[coords1[0]][coords1[1]].i2_column = -1;
+            recalculate(coords1[0],coords1[1] , sheet);
+            return 1;
+        }
+        else{
+            if(not has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]))
+            {
+                delete_dependencies(coords1[0],coords1[1]);
+                relation[coords1[0]][coords1[1]].operation = 20;
+                relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+                relation[coords1[0]][coords1[1]].i2_row = coords2[0];
+                relation[coords1[0]][coords1[1]].i2_column = coords2[1];
+                add_dependencies(coords1[0],coords1[1]);
+                recalculate(coords1[0],coords1[1] , sheet);
+                return 1;
+            }
+            else
+            {
+                printf("cycle");
+                return 0;
+            }
+        }
+        }
     else {
     int coords1[2];
     int coords2[2];

@@ -7,7 +7,7 @@
 
 #define MAX_SIZE 100
 void print_status(double *time , char *msg){
-    printf("[%.1f] (%s) > " , *time , msg);
+    printf("[%.8f] (%s) > " , *time , msg);
 }
 
 int main(int argc , char** argv){

@@ -3,6 +3,7 @@
 #include"sheet.h"
 #include"recalculations.h"
 #include<unistd.h>
+#include<time.h>
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
@@ -117,5 +118,20 @@ int std_dev_range(int **sheet, char *cell, char *start, char *end){
         }
     }
     sheet[coords1[0]][coords1[1]] = sum_sq/count;
+    return 1;
+}
+
+int sleep_value(int **sheet, char *cell, int value){
+    int val = value;
+    if (val < 0) return 0;
+    clock_t start, end;
+    start = clock();
+    end = clock();
+    while(((double) (end - start)) / CLOCKS_PER_SEC < val){
+        end = clock();
+    }
+    int coords1[2];
+    cell_to_coords(cell , coords1);
+    sheet[coords1[0]][coords1[1]] = val;
     return 1;
 }

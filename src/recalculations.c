@@ -17,6 +17,7 @@
 /// 17: subtract int with cell: arithmetic (_,_,17)
 /// 18: multiply int with cell: arithmetic (_,_,18)
 /// 19: divide int with cell: arithmetic (_,_,19)
+/// 20: sleep cell
 #include <stdio.h>
 #include <stdlib.h>
 #include "functions.h"
@@ -104,14 +105,13 @@ int has_cycle(int target_row, int target_col, int current_row, int current_col) 
 
     struct relation_data current_relation = relation[current_row][current_col];
 
-    if (current_relation.operation == 0 || current_relation.operation == 1) {
+    if (current_relation.operation == 0 || current_relation.operation == 1  ) {
         // No dependencies for this cell
         return 0;
     }
 
 
-    if (current_relation.operation == 2) {
-
+    if (current_relation.operation == 2 || current_relation.operation == 20) {
          if (has_cycle(target_row, target_col, current_relation.i1_row, current_relation.i1_column)) {
             return 1;
         }
@@ -190,9 +190,6 @@ int has_cycle(int target_row, int target_col, int current_row, int current_col) 
         return 0;
         
     }
-
-
-
 
     return 0; // No cycle detected
 }
@@ -430,7 +427,7 @@ void delete_dependencies(int impacted_row, int impacted_col) {
     }
 
     // Single dependency case
-    if (current_relation.operation == 2) {
+    if (current_relation.operation == 2 || current_relation.operation == 20) {
         int row = current_relation.i2_row;
         int col = current_relation.i2_column;
         clear_dependency(row, col, impacted_row, impacted_col);
@@ -496,7 +493,7 @@ void add_dependencies(int impacted_row, int impacted_col){
     }
 
     // Single dependency case
-    if (current_relation.operation == 2) {
+    if (current_relation.operation == 2 || current_relation.operation == 20) {
         int row = current_relation.i2_row;
         int col = current_relation.i2_column;
         add_dependency(row, col, impacted_row, impacted_col);
@@ -677,9 +674,15 @@ void recalculate(int row , int col , int** sheet){
         }
         continue;
     }
+    if (relation[current_row][current_col].operation == 20){
+        int cur_coords[] = {current_row, current_col};
+        char cur_cell[10];
+        coords_to_cell(cur_coords, cur_cell);
+        sleep_value(sheet, cur_cell, sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column]);
+        continue;
     }
     free(visited);
     free(stack);
-    
+}
 }
 
