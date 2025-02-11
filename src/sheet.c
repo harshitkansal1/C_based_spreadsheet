@@ -82,39 +82,43 @@ int** initialize_sheet(int rows, int cols){
 
 void print_sheet(int** sheet, int direction){
     if (direction == 's') {
-        if (ROWS >= origin_y+2) origin_y+=1;
+        if (ROWS >= origin_y+11) origin_y = min(origin_y+10 ,ROWS-10 );
     }
     else if (direction == 'w'){
-        origin_y = max(origin_y -1 , 0);
+        origin_y = max(origin_y -10 , 0);
     }
     else if (direction == 'a'){
-        origin_x = max(0 , origin_x-1);
+        origin_x = max(0 , origin_x-10);
     }
     else if (direction == 'd'){
-        if (COLS >= origin_x+2) origin_x+=1;
+        if (COLS >= origin_x+11) origin_x = max(origin_x+10 , COLS-10);
     }
     printf("\t");
     for (int i = origin_x; i< min(origin_x+10 , COLS); i++){
         if (i < 26){
-            printf("%c\t" , ('A' + i));
+            printf("%11c " , ('A' + i));
         }
         else if (i < 26 + 26*26) {
             char c1 = 'A'+((i-26)/(26));
             char c2 = 'A'+((i-26)%(26));
-            printf("%c%c\t" , c1 , c2);
+            char temp[2] = {c1 , c2};
+            printf("%11s " , temp);
         }
         else {
             char c1 = 'A'+((i-26 - 26*26)/(26*26));
-            char c2 = 'A'+((i-26 - 26*26)/(26));
+            char c2 = 'A'+(((i-26 - 26*26)/(26))%26);
             char c3 =  'A'+((i-26 - 26*26)%26);
-            printf("%c%c%c\t" , c1 , c2 , c3);
+            char temp[3] = {c1 , c2 , c3};
+            printf("%11s " , temp);
         }
     }
     printf("\n");
     for(int i = origin_y; i < min(origin_y+10 , ROWS); i++){
         printf("%d\t" , i+1);
         for(int j = origin_x; j < min(origin_x+10 , COLS); j++){
-            printf("%d\t", sheet[i][j]);
+            if (relation[i][j].error ==1 ) printf("%11s " , "ERR");
+            else
+            printf("%11d ", sheet[i][j]);
         }
         printf("\n");
     }
@@ -124,7 +128,7 @@ void process_control_input(int** sheet , char* control){
     if (control[0] == 'q') {
         exit(0);
     }
-    else if (strcmp(control , "enable_output") == 0) enable = 1;
+    else if (strcmp(control , "enable_output") == 0) {enable = 1; print_sheet(sheet , 0);}
     else if (strcmp(control , "disable_output") == 0) {enable = 0; printf("output disabled\n");}
     else if (control[0] == 's' && enable) print_sheet(sheet , 's');
     else if (control[0] == 'w' && enable) print_sheet(sheet , 'w');
@@ -139,7 +143,7 @@ void process_control_input(int** sheet , char* control){
     }
 }
 
-void process_assign_input(int** sheet, char* cell , char* value){
+int process_assign_input(int** sheet, char* cell , char* value){
     int coords1[2];
     int coords2[2];
     cell_to_coords(cell , coords1);
@@ -153,7 +157,6 @@ void process_assign_input(int** sheet, char* cell , char* value){
         relation[coords1[0]][coords1[1]].i2_column = -1;
         recalculate(coords1[0],coords1[1],sheet);
         printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
-        
     }
     else{
         if(not has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) )
@@ -171,6 +174,7 @@ void process_assign_input(int** sheet, char* cell , char* value){
         else
         {
             printf("cycle");
+            return 0;
         }
     }
 }
@@ -200,7 +204,9 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             else if (operation[0] == '-') sheet[coords1[0]][coords1[1]] = v1 - v2;
             else if (operation[0] == '*') sheet[coords1[0]][coords1[1]] = v1 * v2;
             else if (operation[0] == '/') {
-                if (v2 == 0) return 0;
+                if (v2 == 0) { relation[coords1[0]][coords1[1]].error = 1;
+                }
+                else 
                 sheet[coords1[0]][coords1[1]] = v1 / v2;
             }
             relation[coords1[0]][coords1[1]].operation = 1;
@@ -223,7 +229,9 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
         else if (operation[0] == '-') {sheet[coords1[0]][coords1[1]] = v1 - v2; relation[coords1[0]][coords1[1]].operation = 13;}
         else if (operation[0] == '*') {sheet[coords1[0]][coords1[1]] = v1 * v2; relation[coords1[0]][coords1[1]].operation = 14;}
         else if (operation[0] == '/') {
-            if (v2 == 0) return 0;
+            if (v2 == 0) {relation[coords1[0]][coords1[1]].error = 1;
+            }
+            else
             sheet[coords1[0]][coords1[1]] = v1 / v2;
             relation[coords1[0]][coords1[1]].operation = 15;
         }
@@ -249,7 +257,9 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
         else if (operation[0] == '-') {sheet[coords1[0]][coords1[1]] = v1 - v2; relation[coords1[0]][coords1[1]].operation = 9;}
         else if (operation[0] == '*') {sheet[coords1[0]][coords1[1]] = v1 * v2; relation[coords1[0]][coords1[1]].operation = 10;}
         else if (operation[0] == '/') {
-            if (v2 == 0) return 0;
+            if (v2 == 0) {relation[coords1[0]][coords1[1]].error = 1;
+            }
+            else
             sheet[coords1[0]][coords1[1]] = v1 / v2;
             relation[coords1[0]][coords1[1]].operation = 11;
         }
@@ -276,7 +286,9 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
         else if (operation[0] == '-') {sheet[coords1[0]][coords1[1]] = v1 - v2; relation[coords1[0]][coords1[1]].operation = 17;}
         else if (operation[0] == '*') {sheet[coords1[0]][coords1[1]] = v1 * v2; relation[coords1[0]][coords1[1]].operation = 18;}
         else if (operation[0] == '/') {
-            if (v2 == 0) return 0;
+            if (v2 == 0) {relation[coords1[0]][coords1[1]].error = 1;
+            }
+            else
             sheet[coords1[0]][coords1[1]] = v1 / v2;
             relation[coords1[0]][coords1[1]].operation = 19;
         }
@@ -302,7 +314,7 @@ int process_functions(int **sheet, char *cell, char *start, char *operation, cha
         if (cell_to_coords(start , coords2) == 0){
             int value = atoi(start);
             delete_dependencies(coords1[0],coords1[1]);
-            if (value < 0) return 0;
+            sleep_value(sheet, cell, value);
             relation[coords1[0]][coords1[1]].operation = 1;
             relation[coords1[0]][coords1[1]].i1_row = -1;
             relation[coords1[0]][coords1[1]].i1_column = -1;

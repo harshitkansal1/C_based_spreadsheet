@@ -51,6 +51,8 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
     if (!cell_to_coords(cell1 , coords)) return 0;
     i++;
     if (line[i] == '-') {cell2[0] = '-'; j++; i++;}
+    if (line[i] == '+') {if (j!=0) return 0; cell2[0] = '+'; j++; i++;}
+    if (line[i] == '\0' || line[i] == '\n' || line[i] == '+' || line[i] == '-') return 0;  // empty after + or -1
     while (line[i] != '\0' && line[i] != '+' && line[i] != '-' && line[i] != '*' && line[i] != '/' && line[i] != '(' && line[i]!='\n'){
         cell2[j] = line[i];
         j++;
@@ -59,12 +61,11 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
     cell2[j] = '\0';
     if (!(line[i] == '(')) {
         int k;
-        if (cell2[0] == '-'){
+        if (cell2[0] == '-' || cell2[0] == '+'){
             k = 1;
         }
         else k = 0;
         for ( ;k < j; k++){
-        
         if (cell2[k] < '0' || cell2[k] > '9' )  temp = 1;
     }   
     if (temp == 0){
@@ -74,6 +75,7 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
     }
     if (line[i] == '\0' || line[i] == '\n') return 2;
     if (!(line[i] == '(')){
+        printf("hi");
         temp=0;
         operation[0] = line[i];
         operation[1] = '\0';
@@ -86,9 +88,11 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
         }
         cell3[j] = '\0';
         int k;
-        if (cell3[0] == '-'){
+        if (cell3[0] == '-' || cell3[0] == '+'){
             k = 1;
+            if (cell3[1] == '-' || cell3[1] == '+' || cell3[1] == '\0') return 0;
         }else k = 0;
+        if (cell3[0]== '\0') return 0;
         for (; k < j; k++){
             if (cell3[k] < '0' || cell3[k] > '9') temp = 1;
         }   
@@ -112,11 +116,16 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
         i++;
         if (line[i] != '\0' && line[i]!= '\n') return 0;
         temp = 0;
-        for (int k = 0; k < j; k++){
+        int k = 0;
+        if (cell2[0] == '\0') return 0;
+        if (cell2[0] == '-' || cell2[0] == '+'){
+            k = 1;
+            if (cell2[1] == '-' || cell2[1] == '+' || cell2[1] == '\0') return 0;}
+        for (; k < j; k++){
         if (cell2[k] < '0' || cell2[k] > '9') temp = 1;
         }   
         if (temp == 0){
-            if (j>10) return 0; //overflow
+            if (j>11) return 0; //overflow
         }   
         if (!cell_to_coords(cell2 , coords) && temp) return 0; // invalid cell
         return 4;

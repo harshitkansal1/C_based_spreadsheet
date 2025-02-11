@@ -1,7 +1,6 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-
 int min_range(int **, char *, char *, char *);
 int max_range(int **, char *, char *, char *);
 int sum_range(int **, char *, char *, char *);

@@ -5,6 +5,7 @@ struct relation_data {
     int i1_column;
     int i2_row;
     int i2_column;
+    int error;
 };
 
 extern struct relation_data** relation;

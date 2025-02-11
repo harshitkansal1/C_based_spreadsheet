@@ -123,7 +123,6 @@ int std_dev_range(int **sheet, char *cell, char *start, char *end){
 
 int sleep_value(int **sheet, char *cell, int value){
     int val = value;
-    if (val < 0) return 0;
     clock_t start, end;
     start = clock();
     end = clock();
