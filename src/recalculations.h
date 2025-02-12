@@ -1,10 +1,10 @@
 
-struct relation_data {
-    int operation;
-    int i1_row;
-    int i1_column;
-    int i2_row;
-    int i2_column;
+struct __attribute__((packed)) relation_data {
+    int operation:6;
+    int i1_row :12;
+    int i1_column: 16;
+    int i2_row :12;
+    int i2_column: 16;
     int error;
 };
 
@@ -14,15 +14,15 @@ int has_cycle(int target_row, int target_col, int current_row, int current_col) 
 
 int range_has_cycle(int target_row, int target_col);
 
-struct AVLNode {
-    int row;
-    int col;
-    int height;
+struct __attribute__((packed)) AVLNode {
+    int row :12;
+    int col : 16;
+    int height: 16;
     struct AVLNode* left;
     struct AVLNode* right;
 };
 
-struct AVLTree {
+struct __attribute__((packed)) AVLTree {
     struct AVLNode* root;
 };
 
