@@ -102,7 +102,7 @@ void print_sheet(int** sheet, int direction){
     else if (direction == 'd'){
         if (COLS >= origin_x+11) origin_x = max(origin_x+10 , COLS-10);
     }
-    printf("\t");
+    printf("    ");
     for (int i = origin_x; i< min(origin_x+10 , COLS); i++){
         if (i < 26){
             printf("%11c " , ('A' + i));
@@ -123,7 +123,7 @@ void print_sheet(int** sheet, int direction){
     }
     printf("\n");
     for(int i = origin_y; i < min(origin_y+10 , ROWS); i++){
-        printf("%d\t" , i+1);
+        printf("%3d " , i+1);
         for(int j = origin_x; j < min(origin_x+10 , COLS); j++){
             if (relation[i][j].error ==1 ) printf("%11s " , "ERR");
             else
