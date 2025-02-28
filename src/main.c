@@ -7,7 +7,7 @@
 
 #define MAX_SIZE 100
 void print_status(double *time , char *msg){
-    printf("[%.8f] (%s) > " , *time , msg);
+    printf("[%.1f] (%s) > " , *time , msg);
 }
 
 int main(int argc , char** argv){
@@ -27,7 +27,7 @@ int main(int argc , char** argv){
     if (cols > 18278 || cols < 1) {printf("Invalid number of columns"); return 1;}
     start_time = clock();
     int **sheet = initialize_sheet(rows, cols);
-    print_sheet(sheet , 0);
+    // print_sheet(sheet , 0);
     end_time = clock();
     timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
     print_status( &timed , "ok");

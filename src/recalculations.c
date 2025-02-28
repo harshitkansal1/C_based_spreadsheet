@@ -590,6 +590,7 @@ void recalculate(int row , int col , int** sheet){
     for (int i = *stack_index -1; i>=0; i--){
         int current_row = stack[i] / COLS;
         int current_col = stack[i] % COLS;
+        // printf("Current row: %d, Current col: %d\n", current_row, current_col);
         if (relation[current_row][current_col].operation == 0){
             continue;
         }
@@ -616,6 +617,7 @@ void recalculate(int row , int col , int** sheet){
             coords_to_cell(coord1, cell1);
             coords_to_cell(coord2, cell2);
             coords_to_cell(cur_coords, cur_cell);
+            // printf("Current cell: %s\n", cur_cell);
             if (relation[current_row][current_col].operation == 3){
                 min_range(sheet , cur_cell, cell1, cell2);
             }

@@ -1,4 +1,4 @@
-TARGET_EXEC := sheet
+TARGET_EXEC := ./target/release/spreadsheet
 
 BUILD_DIR := ./build
 SRC_DIRS := ./src
@@ -38,7 +38,6 @@ test: $(TEST_TARGET)
 	./$(TEST_TARGET) 
 $(TEST_TARGET): $(TEST_SRC)
 	$(CC) $(CFLAGS) $(TEST_SRC) -o $(TEST_TARGET) 
-
 
 .PHONY: clean
 clean:

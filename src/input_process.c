@@ -75,7 +75,6 @@ int process_input(char *line  , char *cell1 , char *cell2 , char *operation , ch
     }
     if (line[i] == '\0' || line[i] == '\n') return 2;
     if (!(line[i] == '(')){
-        printf("hi");
         temp=0;
         operation[0] = line[i];
         operation[1] = '\0';

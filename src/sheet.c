@@ -56,12 +56,21 @@ void coords_to_cell(int* coords , char* cell){
         i2--;
         j++;
     }
-
+    int i3 = i;
     while (row > 0){
         cell[i] = (row%10) + '0';
         row = row/10;
         i++;
     }
+    int i4 = i-1;
+    while (i4 > i3){
+        char temp = cell[i4];
+        cell[i4] = cell[i3];
+        cell[i3] = temp;
+        i4--;
+        i3++;
+    }
+    
     cell[i] = '\0';
 }
 
@@ -129,7 +138,7 @@ void process_control_input(int** sheet , char* control){
         exit(0);
     }
     else if (strcmp(control , "enable_output") == 0) {enable = 1; print_sheet(sheet , 0);}
-    else if (strcmp(control , "disable_output") == 0) {enable = 0; printf("output disabled\n");}
+    else if (strcmp(control , "disable_output") == 0) {enable = 0; }
     else if (control[0] == 's' && enable) print_sheet(sheet , 's');
     else if (control[0] == 'w' && enable) print_sheet(sheet , 'w');
     else if (control[0] == 'a' && enable) print_sheet(sheet , 'a');
@@ -156,7 +165,7 @@ int process_assign_input(int** sheet, char* cell , char* value){
         relation[coords1[0]][coords1[1]].i2_row = -1;
         relation[coords1[0]][coords1[1]].i2_column = -1;
         recalculate(coords1[0],coords1[1],sheet);
-        printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
+        // printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
     }
     else{
         if(not has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]) )
@@ -374,6 +383,7 @@ int process_functions(int **sheet, char *cell, char *start, char *operation, cha
     else
     {  
         if(strcmp(operation, "MIN") == 0){
+        // printf("coords1: %d\n" , relation[coords1[0]][coords1[1]].operation);
         relation[coords1[0]][coords1[1]].operation = 3;
         min_range(sheet, cell, start, end);
     }
