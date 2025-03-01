@@ -31,21 +31,17 @@
 struct relation_data** relation;
 struct AVLTree** dependencies;
 
-// Function to create a relation graph dynamically
 void create_relation_graph(void) {
-    // Allocate memory for an array of pointers (for rows)
     relation = (struct relation_data**)malloc(ROWS * sizeof(struct relation_data*));
     
-    // Allocate memory for each row
     for (int i = 0; i < ROWS; ++i) {
         relation[i] = (struct relation_data*)malloc(COLS * sizeof(struct relation_data));
        
     }
 
-    // Initialize the array elements
     for (int i = 0; i < ROWS; ++i) {
         for (int j = 0; j < COLS; ++j) {
-            relation[i][j].operation = 0; // Initialize operation or other fields if needed
+            relation[i][j].operation = 0;
             relation[i][j].i1_row = -1;
             relation[i][j].i1_column = -1;
             relation[i][j].i2_row = -1;
@@ -61,7 +57,6 @@ int** get_range_cells(int *start_coords, int *end_coords, int *range_count) {
     int start_row = start_coords[0], start_col = start_coords[1];
     int end_row = end_coords[0], end_col = end_coords[1];
 
-    // Ensure the range is valid (normalize coordinates if needed)
     if (start_row > end_row) {
         int temp = start_row;
         start_row = end_row;
@@ -73,23 +68,20 @@ int** get_range_cells(int *start_coords, int *end_coords, int *range_count) {
         end_col = temp;
     }
 
-    // Calculate the number of cells in the range
     int num_rows = end_row - start_row + 1;
     int num_cols = end_col - start_col + 1;
     *range_count = num_rows * num_cols;
 
-    // Dynamically allocate space for the range of cells
     int **range_cells = (int**)malloc((*range_count) * sizeof(int*));
     for (int i = 0; i < *range_count; i++) {
-        range_cells[i] = (int*)malloc(2 * sizeof(int)); // Each cell stores (row, col)
+        range_cells[i] = (int*)malloc(2 * sizeof(int)); 
     }
 
-    // Populate the range_cells with the coordinates of the range
     int index = 0;
     for (int i = start_row; i <= end_row; i++) {
         for (int j = start_col; j <= end_col; j++) {
-            range_cells[index][0] = i;  // Row index
-            range_cells[index][1] = j;  // Column index
+            range_cells[index][0] = i;
+            range_cells[index][1] = j;
             index++;
         }
     }
@@ -99,7 +91,7 @@ int** get_range_cells(int *start_coords, int *end_coords, int *range_count) {
 
 int has_cycle(int target_row, int target_col, int current_row, int current_col) {
     Stack *stack = create_stack(ROWS * COLS);
-    if (!stack) return -1; // Memory error
+    if (!stack) return -1; 
     int *visited = calloc(ROWS * COLS, sizeof(int));
     if (!visited) { free_stack(stack); return -1; }
 
@@ -239,23 +231,20 @@ struct AVLNode* create_node(int row, int col) {
     }
     node->row = row;
     node->col = col;
-    node->height = 1; // Initial height
+    node->height = 1;
     node->left = NULL;
     node->right = NULL;
     return node;
 }
 
-// Get the height of a node
 int get_height(struct AVLNode* node) {
     return node ? node->height : 0;
 }
 
-// Calculate balance factor
 int balance_factor(struct AVLNode* node) {
     return node ? get_height(node->left) - get_height(node->right) : 0;
 }
 
-// Right rotate
 struct AVLNode* rotate_right(struct AVLNode* y) {
     struct AVLNode* x = y->left;
     struct AVLNode* T2 = x->right;
@@ -269,7 +258,6 @@ struct AVLNode* rotate_right(struct AVLNode* y) {
     return x;
 }
 
-// Left rotate
 struct AVLNode* rotate_left(struct AVLNode* x) {
     struct AVLNode* y = x->right;
     struct AVLNode* T2 = y->left;
@@ -283,7 +271,6 @@ struct AVLNode* rotate_left(struct AVLNode* x) {
     return y;
 }
 
-// Insert a dependency into the AVL tree
 struct AVLNode* insert_avl(struct AVLNode* node, int row, int col) {
     if (!node) return create_node(row, col);
 
@@ -292,33 +279,26 @@ struct AVLNode* insert_avl(struct AVLNode* node, int row, int col) {
     } else if (row > node->row || (row == node->row && col > node->col)) {
         node->right = insert_avl(node->right, row, col);
     } else {
-        // Duplicate dependencies are not allowed
         return node;
     }
 
-    // Update height of the ancestor node
     node->height = 1 + (get_height(node->left) > get_height(node->right) ? get_height(node->left) : get_height(node->right));
 
-    // Balance the tree
     int balance = balance_factor(node);
 
-    // Left Left Case
     if (balance > 1 && (row < node->left->row || (row == node->left->row && col < node->left->col))) {
         return rotate_right(node);
     }
 
-    // Right Right Case
     if (balance < -1 && (row > node->right->row || (row == node->right->row && col > node->right->col))) {
         return rotate_left(node);
     }
 
-    // Left Right Case
     if (balance > 1 && (row > node->left->row || (row == node->left->row && col > node->left->col))) {
         node->left = rotate_left(node->left);
         return rotate_right(node);
     }
 
-    // Right Left Case
     if (balance < -1 && (row < node->right->row || (row == node->right->row && col < node->right->col))) {
         node->right = rotate_right(node->right);
         return rotate_left(node);
@@ -327,7 +307,6 @@ struct AVLNode* insert_avl(struct AVLNode* node, int row, int col) {
     return node;
 }
 
-// Find the node with the smallest value in a subtree
 struct AVLNode* min_value_node(struct AVLNode* node) {
     struct AVLNode* current = node;
     while (current && current->left) {
@@ -336,7 +315,6 @@ struct AVLNode* min_value_node(struct AVLNode* node) {
     return current;
 }
 
-// Delete a dependency from the AVL tree
 struct AVLNode* delete_avl(struct AVLNode* root, int row, int col) {
     if (!root) return root;
 
@@ -345,43 +323,35 @@ struct AVLNode* delete_avl(struct AVLNode* root, int row, int col) {
     } else if (row > root->row || (row == root->row && col > root->col)) {
         root->right = delete_avl(root->right, row, col);
     } else {
-        // Node with only one child or no child
         if (!root->left || !root->right) {
             struct AVLNode* temp = root->left ? root->left : root->right;
             free(root);
             return temp;
         }
 
-        // Node with two children: Get the inorder successor
         struct AVLNode* temp = min_value_node(root->right);
         root->row = temp->row;
         root->col = temp->col;
         root->right = delete_avl(root->right, temp->row, temp->col);
     }
 
-    // Update height
     root->height = 1 + (get_height(root->left) > get_height(root->right) ? get_height(root->left) : get_height(root->right));
 
-    // Balance the tree
     int balance = balance_factor(root);
 
-    // Left Left Case
     if (balance > 1 && balance_factor(root->left) >= 0) {
         return rotate_right(root);
     }
 
-    // Left Right Case
     if (balance > 1 && balance_factor(root->left) < 0) {
         root->left = rotate_left(root->left);
         return rotate_right(root);
     }
 
-    // Right Right Case
     if (balance < -1 && balance_factor(root->right) <= 0) {
         return rotate_left(root);
     }
 
-    // Right Left Case
     if (balance < -1 && balance_factor(root->right) > 0) {
         root->right = rotate_right(root->right);
         return rotate_left(root);
@@ -422,33 +392,28 @@ void clear_dependency(int impactor_row, int impactor_col, int impacted_row, int 
 void delete_dependencies(int impacted_row, int impacted_col) {
     struct relation_data current_relation = relation[impacted_row][impacted_col];
     
-    // No operation
     if (current_relation.operation == 0 || current_relation.operation == 1) {
         return;
     }
 
-    // Single dependency case
     if (current_relation.operation == 2 || current_relation.operation == 20) {
         int row = current_relation.i2_row;
         int col = current_relation.i2_column;
         clear_dependency(row, col, impacted_row, impacted_col);
     }
 
-    // Single dependency case with i1
     if (current_relation.operation >= 8 && current_relation.operation <= 11) {
         int row = current_relation.i1_row;
         int col = current_relation.i1_column;
         clear_dependency(row, col, impacted_row, impacted_col);
     }
 
-    // Single dependency case with i2
     if (current_relation.operation >= 16 && current_relation.operation <= 19) {
         int row = current_relation.i2_row;
         int col = current_relation.i2_column;
         clear_dependency(row, col, impacted_row, impacted_col);
     }
 
-    // Double dependency case
     if (current_relation.operation >= 12 && current_relation.operation <= 15) {
         int row1 = current_relation.i1_row;
         int col1 = current_relation.i1_column;
@@ -458,7 +423,6 @@ void delete_dependencies(int impacted_row, int impacted_col) {
         clear_dependency(row2, col2, impacted_row, impacted_col);
     }
 
-    // Range of dependencies
     if (current_relation.operation >= 3 && current_relation.operation <= 7) {
         int range_count_val;
         int* range_count = &range_count_val;
@@ -477,7 +441,6 @@ void delete_dependencies(int impacted_row, int impacted_col) {
             clear_dependency(pointer[i][0], pointer[i][1], impacted_row, impacted_col);
         }
 
-        // Free memory used for range coordinates
         int total_cells = *range_count;
         for (int i = 0; i < total_cells; i++) {
             free(pointer[i]);
@@ -488,33 +451,28 @@ void delete_dependencies(int impacted_row, int impacted_col) {
 void add_dependencies(int impacted_row, int impacted_col){
     struct relation_data current_relation = relation[impacted_row][impacted_col];
     
-    // No operation
     if (current_relation.operation == 0 || current_relation.operation == 1) {
         return;
     }
 
-    // Single dependency case
     if (current_relation.operation == 2 || current_relation.operation == 20) {
         int row = current_relation.i2_row;
         int col = current_relation.i2_column;
         add_dependency(row, col, impacted_row, impacted_col);
     }
 
-    // Single dependency case with i1
     if (current_relation.operation >= 8 && current_relation.operation <= 11) {
         int row = current_relation.i1_row;
         int col = current_relation.i1_column;
         add_dependency(row, col, impacted_row, impacted_col);
     }
 
-    // Single dependency case with i2
     if (current_relation.operation >= 16 && current_relation.operation <= 19) {
         int row = current_relation.i2_row;
         int col = current_relation.i2_column;
         add_dependency(row, col, impacted_row, impacted_col);
     }
 
-    // Double dependency case
     if (current_relation.operation >= 12 && current_relation.operation <= 15) {
         int row1 = current_relation.i1_row;
         int col1 = current_relation.i1_column;
@@ -524,7 +482,6 @@ void add_dependencies(int impacted_row, int impacted_col){
         add_dependency(row2, col2, impacted_row, impacted_col);
     }
 
-    // Range of dependencies
     if (current_relation.operation >= 3 && current_relation.operation <= 7) {
         int range_count_val;
         int* range_count = &range_count_val;
@@ -543,7 +500,6 @@ void add_dependencies(int impacted_row, int impacted_col){
             add_dependency(pointer[i][0], pointer[i][1], impacted_row, impacted_col);
         }
 
-        // Free memory used for range coordinates
         int total_cells = *range_count;
         for (int i = 0; i < total_cells; i++) {
             free(pointer[i]);
@@ -566,19 +522,18 @@ void toposort(int row, int col, int* visited, int* stack, int* stack_index) {
         int index = current_row * COLS + current_col;
 
         if (visited[index] == 1) {
-            stack[(*stack_index)++] = index; // Post-order visit
+            stack[(*stack_index)++] = index;
             continue;
         }
 
         visited[index] = 1;
 
-        // Push current node back to process after children
         push(call_stack, current_row, current_col);
 
         struct AVLNode *list = malloc(ROWS * COLS * sizeof(struct AVLNode));
         if (!list) { free_stack(call_stack); return; }
         struct AVLNode *list_head = list;
-        int size = traverseavl(dependencies[current_row][current_col].root, &list); // Corrected argument
+        int size = traverseavl(dependencies[current_row][current_col].root, &list);
         list = list_head;
         for (int i = size - 1; i >= 0; i--) {
             int next_row = list[i].row, next_col = list[i].col;
@@ -593,19 +548,19 @@ void toposort(int row, int col, int* visited, int* stack, int* stack_index) {
 
 void recalculate(int row, int col, int** sheet) {
     int *visited = (int*)malloc(ROWS * COLS * sizeof(int));
-    if (!visited) return;  // Exit if allocation fails
+    if (!visited) return;
 
     int *stack = (int*)malloc(ROWS * COLS * sizeof(int));
     if (!stack) {
         free(visited);
-        return;  // Free visited and exit
+        return; 
     }
 
     int *stack_index = (int*)malloc(sizeof(int));
     if (!stack_index) {
         free(stack);
         free(visited);
-        return;  // Free stack, visited and exit
+        return; 
     }
 
     *stack_index = 0;
@@ -786,7 +741,7 @@ void recalculate(int row, int col, int** sheet) {
     }
     free(visited);
     free(stack);
-    free(stack_index);  // Added to ensure all memory is freed
+    free(stack_index); 
 }
 
 void free_relation_graph(void) {
@@ -822,7 +777,7 @@ void push(Stack *stack, int row, int col) {
     if (stack->top + 1 >= stack->capacity) {
         stack->capacity *= 2;
         CellState *new_states = realloc(stack->states, stack->capacity * sizeof(CellState));
-        if (!new_states) return; // Handle failure gracefully
+        if (!new_states) return;
         stack->states = new_states;
     }
     stack->top++;
