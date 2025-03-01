@@ -27,6 +27,22 @@
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
+static int **cycle_cache = NULL; // Global cache for cycle results
+static int cache_target_row = -1, cache_target_col = -1; // Track current target
+
+void init_cycle_cache(int rows, int cols) {
+    if (cycle_cache) {
+        for (int i = 0; i < rows; i++) free(cycle_cache[i]);
+        free(cycle_cache);
+    }
+    cycle_cache = malloc(rows * sizeof(int *));
+    if (!cycle_cache) return;
+    for (int i = 0; i < rows; i++) {
+        cycle_cache[i] = calloc(cols, sizeof(int)); // 0 = unvisited, 1 = no cycle, 2 = cycle
+        if (!cycle_cache[i]) { /* Cleanup and return */ }
+    }
+}
+
 
 struct relation_data** relation;
 struct AVLTree** dependencies;
@@ -98,136 +114,157 @@ int** get_range_cells(int *start_coords, int *end_coords, int *range_count) {
 }
 
 int has_cycle(int target_row, int target_col, int current_row, int current_col) {
-    if (target_row == current_row && target_col == current_col) {
-        // Cycle detected: reached back to the target cell
-        return 1;
+    // Check if cache is for a different target; reset if so
+    if (cache_target_row != target_row || cache_target_col != target_col) {
+        init_cycle_cache(ROWS, COLS);
+        cache_target_row = target_row;
+        cache_target_col = target_col;
     }
 
-    struct relation_data current_relation = relation[current_row][current_col];
-
-    if (current_relation.operation == 0 || current_relation.operation == 1  ) {
-        // No dependencies for this cell
-        return 0;
+    // Check cache first
+    if (cycle_cache[current_row][current_col] != 0) {
+        return cycle_cache[current_row][current_col] == 2 ? 1 : 0;
     }
 
+    Stack *stack = create_stack(ROWS * COLS);
+    if (!stack) return -1;
+    int *visited = calloc(ROWS * COLS, sizeof(int));
+    if (!visited) { free_stack(stack); return -1; }
 
-    if (current_relation.operation == 2 || current_relation.operation == 20) {
-         if (has_cycle(target_row, target_col, current_relation.i1_row, current_relation.i1_column)) {
-            return 1;
+    push(stack, current_row, current_col);
+    int has_cycle_result = 0;
+
+    while (stack->top >= 0) {
+        CellState state;
+        if (!pop(stack, &state)) break;
+
+        int row = state.row, col = state.col;
+        if (row == target_row && col == target_col) {
+            has_cycle_result = 1;
+            break; // Cycle found
         }
-        return 0;
-    }
 
-    // Check the first dependency (i1_row, i1_column)
-    if(current_relation.operation >= 8 && current_relation.operation <=11)
-    {
-        if (current_relation.i1_row != -1 && current_relation.i1_column != -1) {
-            if (has_cycle(target_row, target_col, current_relation.i1_row, current_relation.i1_column)) {
-                return 1;
+        int index = row * COLS + col;
+        if (visited[index]) continue;
+        visited[index] = 1;
+
+        struct relation_data rel = relation[row][col];
+        if (rel.operation == 0 || rel.operation == 1) continue;
+
+        int coords1[2] = {rel.i1_row, rel.i1_column};
+        int coords2[2] = {rel.i2_row, rel.i2_column};
+
+        if (rel.operation == 2 || rel.operation == 20) {
+            if (coords1[0] != -1 && coords1[1] != -1 && !visited[coords1[0] * COLS + coords1[1]])
+                push(stack, coords1[0], coords1[1]);
+        } else if (rel.operation >= 8 && rel.operation <= 11) {
+            if (coords1[0] != -1 && coords1[1] != -1 && !visited[coords1[0] * COLS + coords1[1]])
+                push(stack, coords1[0], coords1[1]);
+        } else if (rel.operation >= 16 && rel.operation <= 19) {
+            if (coords2[0] != -1 && coords2[1] != -1 && !visited[coords2[0] * COLS + coords2[1]])
+                push(stack, coords2[0], coords2[1]);
+        } else if (rel.operation >= 12 && rel.operation <= 15) {
+            if (coords1[0] != -1 && coords1[1] != -1 && !visited[coords1[0] * COLS + coords1[1]])
+                push(stack, coords1[0], coords1[1]);
+            if (coords2[0] != -1 && coords2[1] != -1 && !visited[coords2[0] * COLS + coords2[1]])
+                push(stack, coords2[0], coords2[1]);
+        } else if (rel.operation >= 3 && rel.operation <= 7) {
+            int range_count;
+            int **range_cells = get_range_cells(coords1, coords2, &range_count);
+            if (!range_cells) { free_stack(stack); free(visited); return -1; }
+            for (int i = 0; i < range_count; i++) {
+                int r = range_cells[i][0], c = range_cells[i][1];
+                if (!visited[r * COLS + c]) push(stack, r, c);
             }
-        }
-        return 0;
-    }
-
-    // Check the second dependency (i2_row, i2_column)
-    if(current_relation.operation >= 16 && current_relation.operation <=19)
-    {
-    if (current_relation.i2_row != -1 && current_relation.i2_column != -1) {
-        if (has_cycle(target_row, target_col, current_relation.i2_row, current_relation.i2_column)) {
-            return 1;
+            for (int i = 0; i < range_count; i++) free(range_cells[i]);
+            free(range_cells);
         }
     }
 
-    return 0;
-    }
-
-     if(current_relation.operation >= 12 && current_relation.operation <=15)
-    {
-    if (current_relation.i2_row != -1 && current_relation.i2_column != -1) {
-        if (has_cycle(target_row, target_col, current_relation.i2_row, current_relation.i2_column)) {
-            return 1;
+    // Cache the result for all visited cells
+    for (int i = 0; i < ROWS * COLS; i++) {
+        if (visited[i]) {
+            int r = i / COLS, c = i % COLS;
+            cycle_cache[r][c] = has_cycle_result ? 2 : 1;
         }
     }
 
-    if (current_relation.i1_row != -1 && current_relation.i1_column != -1) {
-            if (has_cycle(target_row, target_col, current_relation.i1_row, current_relation.i1_column)) {
-                return 1;
-            }
-        }
-
-    return 0;
-    }
-
-    if(current_relation.operation >= 3 && current_relation.operation <=7)
-    {
-        int range_count_val;
-        int* range_count = &range_count_val;
-
-        int coord1[] = {current_relation.i1_row,current_relation.i1_column};
-        int coord2[] = {current_relation.i2_row,current_relation.i2_column};
-
-        int** pointer = get_range_cells(coord1,coord2,range_count);
-
-        if(pointer == NULL)
-        {
-            printf("Malloc error");
-            return -1;
-        }
-
-        for(int i = 0; i < *range_count;i++)
-        {
-            if (has_cycle(target_row, target_col, pointer[i][0], pointer[i][1])) {
-                return 1;
-            }
-        }
-
-        int total_cells = *range_count;
-        for (int i = 0; i < total_cells; i++) {
-            free(pointer[i]);
-        }
-        free(pointer);
-
-        return 0;
-        
-    }
-
-    return 0; // No cycle detected
+    free_stack(stack);
+    free(visited);
+    return has_cycle_result;
 }
 
-int range_has_cycle(int target_row, int target_col)
-{
-    struct relation_data current_relation = relation[target_row][target_col];
+int range_has_cycle(int target_row, int target_col) {
+    Stack *stack = create_stack(ROWS * COLS);
+    if (!stack) return -1;
+    int *visited = calloc(ROWS * COLS, sizeof(int));
+    if (!visited) { free_stack(stack); return -1; }
 
-        int range_count_val_1;
-        int* range_count_1 = &range_count_val_1;
+    struct relation_data rel = relation[target_row][target_col];
+    int range_count;
+    int coord1[] = {rel.i1_row, rel.i1_column};
+    int coord2[] = {rel.i2_row, rel.i2_column};
+    int **range_cells = get_range_cells(coord1, coord2, &range_count);
+    if (!range_cells) { free_stack(stack); free(visited); return -1; }
 
-        int coord1_1[] = {current_relation.i1_row,current_relation.i1_column};
-        int coord2_1[] = {current_relation.i2_row,current_relation.i2_column};
+    for (int i = 0; i < range_count; i++)
+        push(stack, range_cells[i][0], range_cells[i][1]);
 
-        int** pointer_1 = get_range_cells(coord1_1,coord2_1,range_count_1);
+    while (stack->top >= 0) {
+        CellState state;
+        if (!pop(stack, &state)) break;
 
-        for(int i = 0; i < *range_count_1;i++)
-        {
-            if (has_cycle(target_row, target_col, pointer_1[i][0], pointer_1[i][1])) {
-                int total_cells = *range_count_1;
-                for (int i = 0; i < total_cells; i++) {
-                    free(pointer_1[i]);
-                }
-                free(pointer_1);
-                return 1;
+        int row = state.row, col = state.col;
+        if (row == target_row && col == target_col) {
+            for (int i = 0; i < range_count; i++) free(range_cells[i]);
+            free(range_cells);
+            free_stack(stack);
+            free(visited);
+            return 1;
+        }
+
+        int index = row * COLS + col;
+        if (visited[index]) continue;
+        visited[index] = 1;
+
+        rel = relation[row][col];
+        if (rel.operation == 0 || rel.operation == 1) continue;
+
+        int coords1[2] = {rel.i1_row, rel.i1_column};
+        int coords2[2] = {rel.i2_row, rel.i2_column};
+
+        if (rel.operation == 2 || rel.operation == 20) {
+            if (coords1[0] != -1 && coords1[1] != -1 && !visited[coords1[0] * COLS + coords1[1]])
+                push(stack, coords1[0], coords1[1]);
+        } else if (rel.operation >= 8 && rel.operation <= 11) {
+            if (coords1[0] != -1 && coords1[1] != -1 && !visited[coords1[0] * COLS + coords1[1]])
+                push(stack, coords1[0], coords1[1]);
+        } else if (rel.operation >= 16 && rel.operation <= 19) {
+            if (coords2[0] != -1 && coords2[1] != -1 && !visited[coords2[0] * COLS + coords2[1]])
+                push(stack, coords2[0], coords2[1]);
+        } else if (rel.operation >= 12 && rel.operation <= 15) {
+            if (coords1[0] != -1 && coords1[1] != -1 && !visited[coords1[0] * COLS + coords1[1]])
+                push(stack, coords1[0], coords1[1]);
+            if (coords2[0] != -1 && coords2[1] != -1 && !visited[coords2[0] * COLS + coords2[1]])
+                push(stack, coords2[0], coords2[1]);
+        } else if (rel.operation >= 3 && rel.operation <= 7) {
+            int sub_range_count;
+            int **sub_cells = get_range_cells(coords1, coords2, &sub_range_count);
+            if (!sub_cells) { /* Cleanup and return -1 */ }
+            for (int i = 0; i < sub_range_count; i++) {
+                int r = sub_cells[i][0], c = sub_cells[i][1];
+                if (!visited[r * COLS + c]) push(stack, r, c);
             }
+            for (int i = 0; i < sub_range_count; i++) free(sub_cells[i]);
+            free(sub_cells);
         }
+    }
 
-        
-
-        int total_cells = *range_count_1;
-        for (int i = 0; i < total_cells; i++) {
-            free(pointer_1[i]);
-        }
-        free(pointer_1);
-
-        return 0;
-
+    for (int i = 0; i < range_count; i++) free(range_cells[i]);
+    free(range_cells);
+    free_stack(stack);
+    free(visited);
+    return 0;
 }
 
 struct AVLNode* create_node(int row, int col) {
@@ -552,23 +589,42 @@ void add_dependencies(int impacted_row, int impacted_col){
 }
 
 void toposort(int row, int col, int* visited, int* stack, int* stack_index) {
-    visited[row * COLS + col] = 1;
+    Stack *call_stack = create_stack(ROWS * COLS);
+    if (!call_stack) return;
 
-    struct AVLNode* current = dependencies[row][col].root;
-    struct AVLNode* list = (struct AVLNode*) malloc(ROWS * COLS * sizeof(struct AVLNode));
-    struct AVLNode* list_head = list;
-    int size = traverseavl(current , &list);
-    list = list_head;
-    for (int i = 0; i<size; i++){
-        int next_row = list_head->row;
-        int next_col = list_head->col;
-        if (!visited[next_row * COLS + next_col]) {
-            toposort(next_row, next_col, visited, stack, stack_index);
+    push(call_stack, row, col);
+
+    while (call_stack->top >= 0) {
+        CellState state;
+        if (!pop(call_stack, &state)) break;
+
+        int current_row = state.row, current_col = state.col;
+        int index = current_row * COLS + current_col;
+
+        if (visited[index] == 1) {
+            stack[(*stack_index)++] = index; // Post-order visit
+            continue;
         }
-        list_head++;
+
+        visited[index] = 1;
+
+        // Push current node back to process after children
+        push(call_stack, current_row, current_col);
+
+        struct AVLNode *list = malloc(ROWS * COLS * sizeof(struct AVLNode));
+        if (!list) { free_stack(call_stack); return; }
+        struct AVLNode *list_head = list;
+        int size = traverseavl(dependencies[current_row][current_col].root, &list); // Corrected argument
+        list = list_head;
+        for (int i = size - 1; i >= 0; i--) {
+            int next_row = list[i].row, next_col = list[i].col;
+            if (!visited[next_row * COLS + next_col])
+                push(call_stack, next_row, next_col);
+        }
+        free(list);
     }
-    free(list);
-    stack[(*stack_index)++] = row * COLS + col;
+
+    free_stack(call_stack);
 }
 
 void recalculate(int row , int col , int** sheet){
@@ -738,4 +794,39 @@ void free_dependencies(void) {
     }
     free(dependencies);
     dependencies = NULL;
+}
+
+Stack *create_stack(int capacity) {
+    Stack *stack = malloc(sizeof(Stack));
+    if (!stack) return NULL;
+    stack->states = malloc(capacity * sizeof(CellState));
+    if (!stack->states) { free(stack); return NULL; }
+    stack->top = -1;
+    stack->capacity = capacity;
+    return stack;
+}
+
+void push(Stack *stack, int row, int col) {
+    if (stack->top + 1 >= stack->capacity) {
+        stack->capacity *= 2;
+        CellState *new_states = realloc(stack->states, stack->capacity * sizeof(CellState));
+        if (!new_states) return; // Handle failure gracefully
+        stack->states = new_states;
+    }
+    stack->top++;
+    stack->states[stack->top].row = row;
+    stack->states[stack->top].col = col;
+}
+
+int pop(Stack *stack, CellState *state) {
+    if (stack->top < 0) return 0;
+    *state = stack->states[stack->top--];
+    return 1;
+}
+
+void free_stack(Stack *stack) {
+    if (stack) {
+        free(stack->states);
+        free(stack);
+    }
 }
