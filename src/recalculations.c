@@ -591,45 +591,59 @@ void toposort(int row, int col, int* visited, int* stack, int* stack_index) {
     free_stack(call_stack);
 }
 
-void recalculate(int row , int col , int** sheet){
+void recalculate(int row, int col, int** sheet) {
     int *visited = (int*)malloc(ROWS * COLS * sizeof(int));
+    if (!visited) return;  // Exit if allocation fails
+
     int *stack = (int*)malloc(ROWS * COLS * sizeof(int));
-    int *stack_index = (int*)malloc(sizeof(int));;
+    if (!stack) {
+        free(visited);
+        return;  // Free visited and exit
+    }
+
+    int *stack_index = (int*)malloc(sizeof(int));
+    if (!stack_index) {
+        free(stack);
+        free(visited);
+        return;  // Free stack, visited and exit
+    }
+
     *stack_index = 0;
-    for(int i = 0; i < ROWS; i++){
-        for(int j = 0; j < COLS; j++){
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
             visited[i * COLS + j] = 0;
         }
     }
-    for(int i = 0; i < ROWS; i++){
-        for(int j = 0; j < COLS; j++){
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
             stack[i * COLS + j] = -1;
         }
     }
     toposort(row, col, visited, stack, stack_index);
-    for (int i = *stack_index -1; i>=0; i--){
+    for (int i = *stack_index - 1; i >= 0; i--) {
         int current_row = stack[i] / COLS;
         int current_col = stack[i] % COLS;
         // printf("Current row: %d, Current col: %d\n", current_row, current_col);
-        if (relation[current_row][current_col].operation == 0){
+        if (relation[current_row][current_col].operation == 0) {
             continue;
         }
-        if (relation[current_row][current_col].operation == 1){
+        if (relation[current_row][current_col].operation == 1) {
             relation[current_row][current_col].error = 0;
             continue;
         }
-        if (relation[current_row][current_col].operation == 2){
-            int row = relation[current_row][current_col].i2_row;
-            int col = relation[current_row][current_col].i2_column;
-            sheet[current_row][current_col] = sheet[row][col];
-            if (relation[row][col].error == 1){
+        if (relation[current_row][current_col].operation == 2) {
+            int row_dep = relation[current_row][current_col].i2_row;
+            int col_dep = relation[current_row][current_col].i2_column;
+            sheet[current_row][current_col] = sheet[row_dep][col_dep];
+            if (relation[row_dep][col_dep].error == 1) {
                 relation[current_row][current_col].error = 1;
                 continue;
-            }else relation[current_row][current_col].error = 0;
-
+            } else {
+                relation[current_row][current_col].error = 0;
+            }
             continue;
         }
-        if (relation[current_row][current_col].operation >= 3 && relation[current_row][current_col].operation <= 7){
+        if (relation[current_row][current_col].operation >= 3 && relation[current_row][current_col].operation <= 7) {
             int coord1[] = {relation[current_row][current_col].i1_row, relation[current_row][current_col].i1_column};
             int coord2[] = {relation[current_row][current_col].i2_row, relation[current_row][current_col].i2_column};
             int cur_coords[] = {current_row, current_col};
@@ -641,124 +655,139 @@ void recalculate(int row , int col , int** sheet){
             coords_to_cell(cur_coords, cur_cell);
             // printf("Current cell: %s\n", cur_cell);
             int err = 0;
-            for (int i = coord1[0]; i <= coord2[0]; i++){
-                for (int j = coord1[1]; j <= coord2[1]; j++){
-                    if (relation[i][j].error == 1){
+            for (int i = coord1[0]; i <= coord2[0]; i++) {
+                for (int j = coord1[1]; j <= coord2[1]; j++) {
+                    if (relation[i][j].error == 1) {
                         relation[current_row][current_col].error = 1;
                         err = 1;
                     }
                 }
             }
-            if (err == 1){
+            if (err == 1) {
                 relation[current_row][current_col].error = 1;
                 continue;
-            }else{
+            } else {
                 relation[current_row][current_col].error = 0;
             }
-            if (relation[current_row][current_col].operation == 3){
-                min_range(sheet , cur_cell, cell1, cell2);
+            if (relation[current_row][current_col].operation == 3) {
+                min_range(sheet, cur_cell, cell1, cell2);
             }
-            if (relation[current_row][current_col].operation == 4){
-                max_range(sheet , cur_cell, cell1, cell2);
+            if (relation[current_row][current_col].operation == 4) {
+                max_range(sheet, cur_cell, cell1, cell2);
             }
-            if (relation[current_row][current_col].operation == 5){
-                avg_range(sheet , cur_cell, cell1, cell2);
+            if (relation[current_row][current_col].operation == 5) {
+                avg_range(sheet, cur_cell, cell1, cell2);
             }
-            if (relation[current_row][current_col].operation == 6){
-                sum_range(sheet , cur_cell, cell1, cell2);
+            if (relation[current_row][current_col].operation == 6) {
+                sum_range(sheet, cur_cell, cell1, cell2);
             }
-            if (relation[current_row][current_col].operation == 7){
-                std_dev_range(sheet , cur_cell, cell1, cell2);
+            if (relation[current_row][current_col].operation == 7) {
+                std_dev_range(sheet, cur_cell, cell1, cell2);
             }
             continue;
-    }
-    if (relation[current_row][current_col].operation >= 8 && relation[current_row][current_col].operation <= 11){
-        if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1){
-            relation[current_row][current_col].error = 1;
-            continue;
-        }else relation[current_row][current_col].error = 0;
-
-        if (relation[current_row][current_col].operation == 8){
-            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] + relation[current_row][current_col].i2_row;
         }
-        if (relation[current_row][current_col].operation == 9){
-            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] - relation[current_row][current_col].i2_row;
-        }
-        if (relation[current_row][current_col].operation == 10){
-            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] * relation[current_row][current_col].i2_row;
-        }
-        if (relation[current_row][current_col].operation == 11){
-            if (relation[current_row][current_col].i2_row == 0){
+        if (relation[current_row][current_col].operation >= 8 && relation[current_row][current_col].operation <= 11) {
+            if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1) {
                 relation[current_row][current_col].error = 1;
                 continue;
+            } else {
+                relation[current_row][current_col].error = 0;
             }
-            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] / relation[current_row][current_col].i2_row;
-        }
-        continue;
-    }
-    if (relation[current_row][current_col].operation >= 12 && relation[current_row][current_col].operation <= 15){
-        if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1 || relation[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column].error == 1){
-            relation[current_row][current_col].error = 1;
+            if (relation[current_row][current_col].operation == 8) {
+                sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] + relation[current_row][current_col].i2_row;
+            }
+            if (relation[current_row][current_col].operation == 9) {
+                sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] - relation[current_row][current_col].i2_row;
+            }
+            if (relation[current_row][current_col].operation == 10) {
+                sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] * relation[current_row][current_col].i2_row;
+            }
+            if (relation[current_row][current_col].operation == 11) {
+                if (relation[current_row][current_col].i2_row == 0) {
+                    relation[current_row][current_col].error = 1;
+                    continue;
+                }
+                sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] / relation[current_row][current_col].i2_row;
+            }
             continue;
-        }else relation[current_row][current_col].error = 0;
-
-        if (relation[current_row][current_col].operation == 12){
-            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] + sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
         }
-        if (relation[current_row][current_col].operation == 13){
-            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] - sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
-        }
-        if (relation[current_row][current_col].operation == 14){
-            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] * sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
-        }
-        if (relation[current_row][current_col].operation == 15){
-            if (sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column] == 0){
+        if (relation[current_row][current_col].operation >= 12 && relation[current_row][current_col].operation <= 15) {
+            if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1 || 
+                relation[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column].error == 1) {
                 relation[current_row][current_col].error = 1;
                 continue;
+            } else {
+                relation[current_row][current_col].error = 0;
             }
-            sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] / sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
-        }
-        continue;
-    }
-    if (relation[current_row][current_col].operation >= 16 && relation[current_row][current_col].operation <= 19){
-        if (relation[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column].error == 1){
-            relation[current_row][current_col].error = 1;
+            if (relation[current_row][current_col].operation == 12) {
+                sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] + 
+                                                  sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+            }
+            if (relation[current_row][current_col].operation == 13) {
+                sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] - 
+                                                  sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+            }
+            if (relation[current_row][current_col].operation == 14) {
+                sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] * 
+                                                  sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+            }
+            if (relation[current_row][current_col].operation == 15) {
+                if (sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column] == 0) {
+                    relation[current_row][current_col].error = 1;
+                    continue;
+                }
+                sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] / 
+                                                  sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+            }
             continue;
-        }else relation[current_row][current_col].error = 0;
-        if (relation[current_row][current_col].operation == 16){
-            sheet[current_row][current_col] = relation[current_row][current_col].i1_row + sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
         }
-        if (relation[current_row][current_col].operation == 17){
-            sheet[current_row][current_col] = relation[current_row][current_col].i1_row - sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
-        }
-        if (relation[current_row][current_col].operation == 18){
-            sheet[current_row][current_col] = relation[current_row][current_col].i1_row * sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
-        }
-        if (relation[current_row][current_col].operation == 19){
-            if (sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column] == 0){
+        if (relation[current_row][current_col].operation >= 16 && relation[current_row][current_col].operation <= 19) {
+            if (relation[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column].error == 1) {
                 relation[current_row][current_col].error = 1;
                 continue;
+            } else {
+                relation[current_row][current_col].error = 0;
             }
-            sheet[current_row][current_col] = relation[current_row][current_col].i1_row / sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
-        }
-        continue;
-    }
-    if (relation[current_row][current_col].operation == 20){
-        int cur_coords[] = {current_row, current_col};
-        char cur_cell[10];
-        coords_to_cell(cur_coords, cur_cell);
-        if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1){
-            relation[current_row][current_col].error = 1;
+            if (relation[current_row][current_col].operation == 16) {
+                sheet[current_row][current_col] = relation[current_row][current_col].i1_row + 
+                                                  sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+            }
+            if (relation[current_row][current_col].operation == 17) {
+                sheet[current_row][current_col] = relation[current_row][current_col].i1_row - 
+                                                  sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+            }
+            if (relation[current_row][current_col].operation == 18) {
+                sheet[current_row][current_col] = relation[current_row][current_col].i1_row * 
+                                                  sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+            }
+            if (relation[current_row][current_col].operation == 19) {
+                if (sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column] == 0) {
+                    relation[current_row][current_col].error = 1;
+                    continue;
+                }
+                sheet[current_row][current_col] = relation[current_row][current_col].i1_row / 
+                                                  sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
+            }
             continue;
-        }else relation[current_row][current_col].error = 0;
-        sleep_value(sheet, cur_cell, sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column]);
-        continue;
+        }
+        if (relation[current_row][current_col].operation == 20) {
+            int cur_coords[] = {current_row, current_col};
+            char cur_cell[10];
+            coords_to_cell(cur_coords, cur_cell);
+            if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1) {
+                relation[current_row][current_col].error = 1;
+                continue;
+            } else {
+                relation[current_row][current_col].error = 0;
+            }
+            sleep_value(sheet, cur_cell, sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column]);
+            continue;
+        }
     }
     free(visited);
     free(stack);
+    free(stack_index);  // Added to ensure all memory is freed
 }
-}
-
 
 void free_relation_graph(void) {
     if (!relation) return;
