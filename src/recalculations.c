@@ -720,3 +720,22 @@ void recalculate(int row , int col , int** sheet){
 }
 }
 
+
+void free_relation_graph(void) {
+    if (!relation) return;
+    for (int i = 0; i < ROWS; i++) free(relation[i]);
+    free(relation);
+    relation = NULL;
+}
+
+void free_dependencies(void) {
+    if (!dependencies) return;
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++)
+            while (dependencies[i][j].root)
+                dependencies[i][j].root = delete_avl(dependencies[i][j].root, dependencies[i][j].root->row, dependencies[i][j].root->col);
+        free(dependencies[i]);
+    }
+    free(dependencies);
+    dependencies = NULL;
+}

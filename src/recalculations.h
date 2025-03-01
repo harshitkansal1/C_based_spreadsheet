@@ -38,3 +38,6 @@ void add_dependencies(int , int);
 int** get_range_cells(int *start_coords, int *end_coords, int *range_count);
 
 void recalculate(int , int , int** );
+
+void free_relation_graph(void);
+void free_dependencies(void);
