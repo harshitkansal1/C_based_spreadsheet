@@ -1,21 +1,19 @@
-\documentclass[12pt,letterpaper, onecolumn]{exam}
-% \documentclass{article}
+\documentclass[12pt,letterpaper,onecolumn]{exam}
 \usepackage{array}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{graphicx}  % Added for including images
-\usepackage[lmargin=71pt, tmargin=1.2in]{geometry}  %For centering solution box
+\usepackage{graphicx}
+\usepackage[lmargin=71pt,tmargin=1.2in]{geometry}
 \usepackage{float}
-\usepackage{bm} % Add this line in your preamble if not already included
-% \lhead{Left Header\\}
-% \rhead{Right Header\\}
-%\thispagestyle{empty}   % Commented out to show page number on the first page
+\usepackage{bm}
+\usepackage{tabularx}
+
 
 \begin{document}
 
-\begingroup  
+\begingroup
     \centering
     \LARGE COP290\\
     \LARGE C-LAB\\[1em]
@@ -28,70 +26,67 @@
     \large IIT Delhi\par
 \endgroup
 
-
 \rule{\textwidth}{0.4pt}
+
 \section{Design Decisions}
-% \label{sec:1}
-\subsection{Subsection}
-\vspace{0.1cm}
 
-\noindent \textbf{Step 1:}
+\subsection{Data Structures and Algorithms}
 
-\vspace{0.4cm}
+\noindent \textbf{Step 1: Sheet Representation and Dependency Tracking}\\
+The spreadsheet is represented using a 2D dynamic array. For tracking dependencies among cells, an adjacency structure based on AVL trees is used. Each cell maintains its dependency in a separate AVL tree . The AVL tree implementation optimizes the time complexity such that insertion, deletion, and lookup operations have an overall complexity of \(O(\log n)\). In addition, we used bitfields to store the operation type along with the dependent cell coordinates in a memory-efficient way.
 
-\noindent \textbf{Step 2:}
+\vspace{0.3cm}
 
-\vspace{0.4cm}
-
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{}
-%     \caption{}}
-%     \label{}
-% \end{figure}
-
-\pagestyle{plain} % Removes headers from subsequent pages
-
-
-% \begin{figure}[h]
-%     \centering
-%     \begin{minipage}{0.45\textwidth}
-%         \centering
-%         \includegraphics[width=\textwidth]{}
-%         \caption{}
-%         \label{}
-%     \end{minipage}\hfill
-%     \begin{minipage}{0.45\textwidth}
-%         \centering
-%         \includegraphics[width=\textwidth]{}
-%         \caption{}
-%         \label{}
-%     \end{minipage}
-% \end{figure}
+\noindent \textbf{Step 2: Recalculation Strategy}\\
+To propagate updates efficiently, a topological sort-based recalculation is implemented. Functions like \texttt{toposort} and \texttt{recalculate} traverse the dependency graph ensuring that cells are updated in the correct order -- i.e., every cell is recalculated only after all cells it depends on have been updated. 
 
 \section{Challenges Faced}
 
-% \label{sec:1}
+The main challenge was handling large range operations. For example, the command \texttt{A1=SUM(A2:ZZZ999)} involves almost 18000000 cells. The challenge was because of the large number of memory allocations and AVL tree insertions required and the cycle detection in the dependency graph. Also, we had to convert recursive implementations to iterative implementations to avoiding stack memory to be exceeded and the program to crash. This required a lot of time in debugging.
 
 \section{Structure of the Program}
-\subsection{Subsection 1}
 
-% \label{sec:2}
-% \label{sec:1}
+\subsection{Modules and Interactions}
 
-% \newpage
-% \section{}
-% \subsection{Plot 1}
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.5\textwidth]{}
-%     \caption{}
-%     \label{}
-% \end{figure}
+The program is modularized into the following key files:
+
+\begin{itemize}
+    \item \textbf{main.c}: Controls the program flow; initializes the sheet; reads input from the user; times execution and prints output; and calls other modules for processing.
+    \item \textbf{input\_process.c}: Parses user input and distinguishes among control commands, value assignments, arithmetic expressions, and function assignments.
+    \item \textbf{sheet.c}: Manages the spreadsheet state including coordinate conversions. It provides routines to print the sheet and executes commands.
+    \item \textbf{functions.c}: Implements various range functions (e.g., \texttt{MIN}, \texttt{MAX}, \texttt{SUM}, \texttt{AVG}, \texttt{STDEV}) as well as sleep functionality.
+    \item \textbf{recalculations.c}: Handles dependency management using AVL trees, cycle detection (\texttt{has\_cycle}), and the propagation of updates via topological sorting. All updates to dependent cells are scheduled here.
+\end{itemize}
+
+\noindent \textbf{Execution Flow:}\\
+The execution flow begins with input read by \texttt{main.c}, moves to parsing in \texttt{input\_process.c}, and then branches to processing commands in either \texttt{sheet.c} or \texttt{functions.c}. Any changes that affect other cells trigger dependency updates in \texttt{recalculations.c} and finally, the updated sheet is printed as output.
 
 \section{Test Suite}
-% \label{sec:1}
+
 
 \section{Diagram of Software}
-% \label{sec:1}
+
+A high-level flowchart of the program is outlined below:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|X|X|}
+    \hline
+    \textbf{Input Block} & \texttt{main.c} reads user commands and sends them to \texttt{process\_input} \\
+    \hline
+    \textbf{Processing Block} & \texttt{input\_process.c} splits the command into control, assignment, arithmetic, or function types and calls the respective module \\
+    \hline
+    \textbf{Dependency Block} & \texttt{recalculations.c} updates the dependency graph (AVL trees) and recalculates affected cells using topological sort \\
+    \hline
+    \textbf{Output Block} & \texttt{sheet.c} prints the updated sheet via \texttt{print\_sheet} \\
+    \hline
+\end{tabularx}
+\end{center}
+
+This modular structure and clear separation of responsibilities enhance both the maintainability and scalability of the program.
+
+\section{Conclusion}
+
+In summary, the program implements a spreadsheet application with arithmetic and range operations. We implemented the sheet using dynamic arrays, dependency management using AVL trees, and topological sort for recalculation in order to achieve efficiency and scalability even for very large inputs. While there were issues with performance and memory management during large operations, they were resolved using iterative implementations and the use of explicit stacks.
+
+\pagestyle{plain}
 \end{document}
