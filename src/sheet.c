@@ -100,7 +100,7 @@ void print_sheet(int** sheet, int direction){
         origin_x = max(0 , origin_x-10);
     }
     else if (direction == 'd'){
-        if (COLS >= origin_x+11) origin_x = max(origin_x+10 , COLS-10);
+        if (COLS >= origin_x+11) origin_x = min(origin_x+10 , COLS-10);
     }
     printf("    ");
     for (int i = origin_x; i< min(origin_x+10 , COLS); i++){
