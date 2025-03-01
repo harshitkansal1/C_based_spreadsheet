@@ -595,6 +595,7 @@ void recalculate(int row , int col , int** sheet){
             continue;
         }
         if (relation[current_row][current_col].operation == 1){
+            relation[current_row][current_col].error = 0;
             continue;
         }
         if (relation[current_row][current_col].operation == 2){
@@ -604,7 +605,8 @@ void recalculate(int row , int col , int** sheet){
             if (relation[row][col].error == 1){
                 relation[current_row][current_col].error = 1;
                 continue;
-            }
+            }else relation[current_row][current_col].error = 0;
+
             continue;
         }
         if (relation[current_row][current_col].operation >= 3 && relation[current_row][current_col].operation <= 7){
@@ -618,6 +620,21 @@ void recalculate(int row , int col , int** sheet){
             coords_to_cell(coord2, cell2);
             coords_to_cell(cur_coords, cur_cell);
             // printf("Current cell: %s\n", cur_cell);
+            int err = 0;
+            for (int i = coord1[0]; i <= coord2[0]; i++){
+                for (int j = coord1[1]; j <= coord2[1]; j++){
+                    if (relation[i][j].error == 1){
+                        relation[current_row][current_col].error = 1;
+                        err = 1;
+                    }
+                }
+            }
+            if (err == 1){
+                relation[current_row][current_col].error = 1;
+                continue;
+            }else{
+                relation[current_row][current_col].error = 0;
+            }
             if (relation[current_row][current_col].operation == 3){
                 min_range(sheet , cur_cell, cell1, cell2);
             }
@@ -639,7 +656,8 @@ void recalculate(int row , int col , int** sheet){
         if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1){
             relation[current_row][current_col].error = 1;
             continue;
-        }
+        }else relation[current_row][current_col].error = 0;
+
         if (relation[current_row][current_col].operation == 8){
             sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] + relation[current_row][current_col].i2_row;
         }
@@ -662,7 +680,8 @@ void recalculate(int row , int col , int** sheet){
         if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1 || relation[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column].error == 1){
             relation[current_row][current_col].error = 1;
             continue;
-        }
+        }else relation[current_row][current_col].error = 0;
+
         if (relation[current_row][current_col].operation == 12){
             sheet[current_row][current_col] = sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column] + sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
         }
@@ -685,7 +704,7 @@ void recalculate(int row , int col , int** sheet){
         if (relation[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column].error == 1){
             relation[current_row][current_col].error = 1;
             continue;
-        }
+        }else relation[current_row][current_col].error = 0;
         if (relation[current_row][current_col].operation == 16){
             sheet[current_row][current_col] = relation[current_row][current_col].i1_row + sheet[relation[current_row][current_col].i2_row][relation[current_row][current_col].i2_column];
         }
@@ -711,7 +730,7 @@ void recalculate(int row , int col , int** sheet){
         if (relation[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column].error == 1){
             relation[current_row][current_col].error = 1;
             continue;
-        }
+        }else relation[current_row][current_col].error = 0;
         sleep_value(sheet, cur_cell, sheet[relation[current_row][current_col].i1_row][relation[current_row][current_col].i1_column]);
         continue;
     }

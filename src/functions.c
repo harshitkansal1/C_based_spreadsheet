@@ -4,6 +4,7 @@
 #include"recalculations.h"
 #include<unistd.h>
 #include<time.h>
+#include<math.h>
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
@@ -111,13 +112,14 @@ int std_dev_range(int **sheet, char *cell, char *start, char *end){
         }
     }
     int avg = sum/count;
-    int sum_sq = 0;
+    double sum_sq = 0.0;
     for(int i = coords2[0]; i <= coords3[0]; i++){
         for(int j = coords2[1]; j <= coords3[1]; j++){
             sum_sq += (sheet[i][j] - avg)*(sheet[i][j] - avg);
         }
     }
-    sheet[coords1[0]][coords1[1]] = sum_sq/count;
+    sum_sq = sqrt(sum_sq/count);
+    sheet[coords1[0]][coords1[1]] = (int)round(sum_sq);
     return 1;
 }
 

@@ -32,12 +32,12 @@ $(TARGET_EXEC): $(OBJS)
 # Build step for C source
 $(BUILD_DIR)/%.c.o: %.c
 	mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) -O3 $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 test: $(TEST_TARGET) 
 	./$(TEST_TARGET) 
 $(TEST_TARGET): $(TEST_SRC)
-	$(CC) $(CFLAGS) $(TEST_SRC) -o $(TEST_TARGET) 
+	$(CC) -O3 $(CFLAGS) $(TEST_SRC) -o $(TEST_TARGET) 
 
 .PHONY: clean
 clean:

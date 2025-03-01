@@ -165,6 +165,7 @@ int process_assign_input(int** sheet, char* cell , char* value){
         relation[coords1[0]][coords1[1]].i2_row = -1;
         relation[coords1[0]][coords1[1]].i2_column = -1;
         recalculate(coords1[0],coords1[1],sheet);
+        return 1;
         // printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
     }
     else{
@@ -179,10 +180,10 @@ int process_assign_input(int** sheet, char* cell , char* value){
         relation[coords1[0]][coords1[1]].i2_column = coords2[1];
         add_dependencies(coords1[0],coords1[1]);
         recalculate(coords1[0],coords1[1],sheet);
+        return 1;
         }
         else
         {
-            printf("cycle");
             return 0;
         }
     }
@@ -250,10 +251,11 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             relation[coords1[0]][coords1[1]].i2_column = coords3[1];
             add_dependencies(coords1[0],coords1[1]);
             recalculate(coords1[0],coords1[1] , sheet);
+            return 1;
         }
         else
         {
-            printf("cycle");
+           return 0;
         }
     }
 
@@ -278,10 +280,11 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             relation[coords1[0]][coords1[1]].i2_column = v2;
             add_dependencies(coords1[0],coords1[1]);
             recalculate(coords1[0],coords1[1] , sheet);
+            return 1;
         }
         else
         {
-            printf("cycle");
+            return 0;
         }
     }
 
@@ -307,9 +310,10 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
             relation[coords1[0]][coords1[1]].i2_column = coords3[1];
             add_dependencies(coords1[0],coords1[1]);
             recalculate(coords1[0],coords1[1] , sheet);
+            return 1;
         }
         else{
-            printf("cycle");
+            return 0;
         }
     }
     return 1;
@@ -347,7 +351,6 @@ int process_functions(int **sheet, char *cell, char *start, char *operation, cha
             }
             else
             {
-                printf("cycle");
                 return 0;
             }
         }
@@ -372,13 +375,13 @@ int process_functions(int **sheet, char *cell, char *start, char *operation, cha
     relation[coords1[0]][coords1[1]].i2_column = coords3[1];
     if(range_has_cycle(coords1[0],coords1[1]))
     {
-        printf("cycle");
         relation[coords1[0]][coords1[1]].operation = copy_1;
         relation[coords1[0]][coords1[1]].i1_row = copy_2;
         relation[coords1[0]][coords1[1]].i1_column = copy_3;
         relation[coords1[0]][coords1[1]].i2_row = copy_4;
         relation[coords1[0]][coords1[1]].i2_column = copy_5;
         add_dependencies(coords1[0],coords1[1]);
+        return 0;
     }
     else
     {  

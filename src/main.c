@@ -7,7 +7,7 @@
 
 #define MAX_SIZE 100
 void print_status(double *time , char *msg){
-    printf("[%.1f] (%s) > " , *time , msg);
+    printf("[%.8f] (%s) > " , *time , msg);
 }
 
 int main(int argc , char** argv){
@@ -50,11 +50,12 @@ int main(int argc , char** argv){
             continue;
         } 
         else if (input_type == 2){
-            process_assign_input(sheet , cell1 , cell2);
+            int flag = process_assign_input(sheet , cell1 , cell2);
             if (enable) print_sheet(sheet , 0);
             end_time = clock();
             timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-            print_status(&timed , "ok");
+            if (flag == 0) print_status(&timed , "error");
+            else print_status(&timed , "ok");
             continue;
         }
         else if (input_type == 3){
@@ -62,7 +63,7 @@ int main(int argc , char** argv){
             if (enable) print_sheet(sheet , 0);
             end_time = clock();
             timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-            print_status(&timed , (flag == 0) ? "division by zero" : "ok");
+            print_status(&timed , (flag == 0) ? "error" : "ok");
             continue;
         }
         else if (input_type == 4){
@@ -70,9 +71,8 @@ int main(int argc , char** argv){
             if (enable) print_sheet(sheet , 0);
             end_time = clock();
             timed = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-            if(flag == 0) print_status(&timed , "invalid range");
-            else if(flag==1) print_status(&timed , "ok");
-            else print_status(&timed , "invalid function");
+            if(flag == 0) print_status(&timed , "error");
+            else print_status(&timed , "ok");
             continue;
         }
         printf("%d" , input_type);
