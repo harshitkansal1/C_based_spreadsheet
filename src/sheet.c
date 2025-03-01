@@ -27,6 +27,8 @@ int cell_to_coords(char *cell , int* coords){
     }
     if (col > COLS) return 0;
     if (cell[i] == '0') return 0;
+    if (cell[0] == '\0') return 0;
+    if (cell[i] == '\0') return 0;
     while ((cell[i] >= '0' && cell[i] <= '9') && cell[i] != '\0'){
         row*=10;
         row+=(cell[i]-'0');
@@ -319,34 +321,38 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
     return 1;
 }
 
-int process_functions(int **sheet, char *cell, char *start, char *operation, char *end){
-    if (strcmp(operation  , "SLEEP") == 0) {
+int process_functions(int **sheet, char *cell, char *start, char *operation, char *end)
+{
+    if (strcmp(operation, "SLEEP") == 0)
+    {
         int coords1[2];
         int coords2[2];
-        cell_to_coords(cell , coords1);
-        if (cell_to_coords(start , coords2) == 0){
+        cell_to_coords(cell, coords1);
+        if (cell_to_coords(start, coords2) == 0)
+        {
             int value = atoi(start);
-            delete_dependencies(coords1[0],coords1[1]);
+            delete_dependencies(coords1[0], coords1[1]);
             sleep_value(sheet, cell, value);
             relation[coords1[0]][coords1[1]].operation = 1;
             relation[coords1[0]][coords1[1]].i1_row = -1;
             relation[coords1[0]][coords1[1]].i1_column = -1;
             relation[coords1[0]][coords1[1]].i2_row = -1;
             relation[coords1[0]][coords1[1]].i2_column = -1;
-            recalculate(coords1[0],coords1[1] , sheet);
+            recalculate(coords1[0], coords1[1], sheet);
             return 1;
         }
-        else{
-            if(not has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]))
+        else
+        {
+            if (not has_cycle(coords1[0], coords1[1], coords2[0], coords2[1]))
             {
-                delete_dependencies(coords1[0],coords1[1]);
+                delete_dependencies(coords1[0], coords1[1]);
                 relation[coords1[0]][coords1[1]].operation = 20;
                 relation[coords1[0]][coords1[1]].i1_row = coords2[0];
                 relation[coords1[0]][coords1[1]].i1_column = coords2[1];
                 relation[coords1[0]][coords1[1]].i2_row = coords2[0];
                 relation[coords1[0]][coords1[1]].i2_column = coords2[1];
-                add_dependencies(coords1[0],coords1[1]);
-                recalculate(coords1[0],coords1[1] , sheet);
+                add_dependencies(coords1[0], coords1[1]);
+                recalculate(coords1[0], coords1[1], sheet);
                 return 1;
             }
             else
@@ -354,63 +360,71 @@ int process_functions(int **sheet, char *cell, char *start, char *operation, cha
                 return 0;
             }
         }
-        }
-    else {
-    int coords1[2];
-    int coords2[2];
-    int coords3[2];
-    cell_to_coords(cell , coords1);
-    cell_to_coords(start , coords2);
-    cell_to_coords(end , coords3);
-    if(coords2[0] > coords3[0] || coords2[1] > coords3[1]) return 0;
-    int copy_1 = relation[coords1[0]][coords1[1]].operation;
-    int copy_2 = relation[coords1[0]][coords1[1]].i1_row;
-    int copy_3 = relation[coords1[0]][coords1[1]].i1_column;
-    int copy_4 = relation[coords1[0]][coords1[1]].i2_row;
-    int copy_5 = relation[coords1[0]][coords1[1]].i2_column;
-    delete_dependencies(coords1[0] , coords1[1]);
-    relation[coords1[0]][coords1[1]].i1_row = coords2[0];
-    relation[coords1[0]][coords1[1]].i1_column = coords2[1];
-    relation[coords1[0]][coords1[1]].i2_row = coords3[0];
-    relation[coords1[0]][coords1[1]].i2_column = coords3[1];
-    if(range_has_cycle(coords1[0],coords1[1]))
-    {
-        relation[coords1[0]][coords1[1]].operation = copy_1;
-        relation[coords1[0]][coords1[1]].i1_row = copy_2;
-        relation[coords1[0]][coords1[1]].i1_column = copy_3;
-        relation[coords1[0]][coords1[1]].i2_row = copy_4;
-        relation[coords1[0]][coords1[1]].i2_column = copy_5;
-        add_dependencies(coords1[0],coords1[1]);
-        return 0;
     }
     else
-    {  
-        if(strcmp(operation, "MIN") == 0){
-        // printf("coords1: %d\n" , relation[coords1[0]][coords1[1]].operation);
-        relation[coords1[0]][coords1[1]].operation = 3;
-        min_range(sheet, cell, start, end);
-    }
-    else if(strcmp(operation, "MAX") == 0){
-        relation[coords1[0]][coords1[1]].operation = 4;
-        max_range(sheet, cell, start, end);
-    }
-    else if(strcmp(operation, "SUM") == 0){
-        relation[coords1[0]][coords1[1]].operation = 6;
-        sum_range(sheet, cell, start, end);
-    }
-    else if(strcmp(operation, "AVG") == 0){
-        relation[coords1[0]][coords1[1]].operation = 5;
-        avg_range(sheet, cell, start, end);
-    }
-    else if(strcmp(operation, "STDEV") == 0){
-        relation[coords1[0]][coords1[1]].operation = 7;
-        std_dev_range(sheet, cell, start, end);
-    }
-    else return 2;
-    add_dependencies(coords1[0],coords1[1]);
-    recalculate(coords1[0],coords1[1] , sheet);
-    return 1;
-    }
+    {
+        int coords1[2];
+        int coords2[2];
+        int coords3[2];
+        cell_to_coords(cell, coords1);
+        cell_to_coords(start, coords2);
+        cell_to_coords(end, coords3);
+        if (coords2[0] > coords3[0] || coords2[1] > coords3[1])
+            return 0;
+        int copy_1 = relation[coords1[0]][coords1[1]].operation;
+        int copy_2 = relation[coords1[0]][coords1[1]].i1_row;
+        int copy_3 = relation[coords1[0]][coords1[1]].i1_column;
+        int copy_4 = relation[coords1[0]][coords1[1]].i2_row;
+        int copy_5 = relation[coords1[0]][coords1[1]].i2_column;
+        delete_dependencies(coords1[0], coords1[1]);
+        relation[coords1[0]][coords1[1]].i1_row = coords2[0];
+        relation[coords1[0]][coords1[1]].i1_column = coords2[1];
+        relation[coords1[0]][coords1[1]].i2_row = coords3[0];
+        relation[coords1[0]][coords1[1]].i2_column = coords3[1];
+        if (range_has_cycle(coords1[0], coords1[1]))
+        {
+            relation[coords1[0]][coords1[1]].operation = copy_1;
+            relation[coords1[0]][coords1[1]].i1_row = copy_2;
+            relation[coords1[0]][coords1[1]].i1_column = copy_3;
+            relation[coords1[0]][coords1[1]].i2_row = copy_4;
+            relation[coords1[0]][coords1[1]].i2_column = copy_5;
+            add_dependencies(coords1[0], coords1[1]);
+            return 0;
+        }
+        else
+        {
+            if (strcmp(operation, "MIN") == 0)
+            {
+                // printf("coords1: %d\n" , relation[coords1[0]][coords1[1]].operation);
+                relation[coords1[0]][coords1[1]].operation = 3;
+                min_range(sheet, cell, start, end);
+            }
+            else if (strcmp(operation, "MAX") == 0)
+            {
+                relation[coords1[0]][coords1[1]].operation = 4;
+                max_range(sheet, cell, start, end);
+            }
+            else if (strcmp(operation, "SUM") == 0)
+            {
+                relation[coords1[0]][coords1[1]].operation = 6;
+                sum_range(sheet, cell, start, end);
+            }
+            else if (strcmp(operation, "AVG") == 0)
+            {
+                relation[coords1[0]][coords1[1]].operation = 5;
+                avg_range(sheet, cell, start, end);
+            }
+            else if (strcmp(operation, "STDEV") == 0)
+            {
+                relation[coords1[0]][coords1[1]].operation = 7;
+                std_dev_range(sheet, cell, start, end);
+            }
+            else
+                return 2;
+            add_dependencies(coords1[0], coords1[1]);
+            recalculate(coords1[0], coords1[1], sheet);
+            return 1;
+        }
     }
 }
 
