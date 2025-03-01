@@ -4,6 +4,7 @@
 #include<time.h>
 #include<string.h>
 #include"input_process.h"
+#include "recalculations.h"
 
 #define MAX_SIZE 100
 void print_status(double *time , char *msg){
@@ -34,7 +35,8 @@ int main(int argc , char** argv){
     while (1){
         fgets(input , MAX_SIZE, stdin);
         start_time = clock();
-        input_type  = process_input(input , cell1 , cell2 , operation , cell3);   
+        input_type  = process_input(input , cell1 , cell2 , operation , cell3); 
+        if (input_type == 1 && operation[0] == 'q') break;  
         if (input_type== 0){
             if (enable) {print_sheet(sheet , 0); }
             end_time = clock();
@@ -77,5 +79,8 @@ int main(int argc , char** argv){
         }
         printf("%d" , input_type);
     }
+    free_sheet(sheet);
+    free_relation_graph();
+    free_dependencies();
     return 0;
 }

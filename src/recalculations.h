@@ -1,3 +1,21 @@
+#ifndef RECALCULATIONS_H
+#define RECALCULATIONS_H
+
+typedef struct __attribute__((packed)) {
+    unsigned int row:10;
+    unsigned int col:15;
+} CellState;
+
+typedef struct {
+    CellState *states;
+    int top;
+    int capacity;
+} Stack;
+
+Stack *create_stack(int capacity);
+void push(Stack *stack, int row, int col);
+int pop(Stack *stack, CellState *state);
+void free_stack(Stack *stack);
 
 struct __attribute__((packed)) relation_data {
     int operation:6;
@@ -5,7 +23,7 @@ struct __attribute__((packed)) relation_data {
     int i1_column: 16;
     int i2_row :12;
     int i2_column: 16;
-    int error;
+    unsigned int error:1;
 };
 
 extern struct relation_data** relation;
@@ -38,3 +56,9 @@ void add_dependencies(int , int);
 int** get_range_cells(int *start_coords, int *end_coords, int *range_count);
 
 void recalculate(int , int , int** );
+
+void free_relation_graph(void);
+void free_dependencies(void);
+
+
+#endif

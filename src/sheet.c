@@ -413,3 +413,9 @@ int process_functions(int **sheet, char *cell, char *start, char *operation, cha
     }
     }
 }
+
+void free_sheet(int **sheet) {
+    if (!sheet) return;
+    for (int i = 0; i < ROWS; i++) free(sheet[i]);
+    free(sheet);
+}

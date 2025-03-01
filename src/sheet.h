@@ -11,4 +11,6 @@ int process_arith_expr(int** , char* , char* , char* , char*);
 int process_functions(int** , char* , char* , char* , char*);
 extern int ROWS , COLS , enable;
 
+void free_sheet(int **sheet);
+
 #endif
