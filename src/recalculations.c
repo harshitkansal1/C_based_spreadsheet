@@ -27,22 +27,6 @@
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
-static int **cycle_cache = NULL; // Global cache for cycle results
-static int cache_target_row = -1, cache_target_col = -1; // Track current target
-
-void init_cycle_cache(int rows, int cols) {
-    if (cycle_cache) {
-        for (int i = 0; i < rows; i++) free(cycle_cache[i]);
-        free(cycle_cache);
-    }
-    cycle_cache = malloc(rows * sizeof(int *));
-    if (!cycle_cache) return;
-    for (int i = 0; i < rows; i++) {
-        cycle_cache[i] = calloc(cols, sizeof(int)); // 0 = unvisited, 1 = no cycle, 2 = cycle
-        if (!cycle_cache[i]) { /* Cleanup and return */ }
-    }
-}
-
 
 struct relation_data** relation;
 struct AVLTree** dependencies;
@@ -114,25 +98,12 @@ int** get_range_cells(int *start_coords, int *end_coords, int *range_count) {
 }
 
 int has_cycle(int target_row, int target_col, int current_row, int current_col) {
-    // Check if cache is for a different target; reset if so
-    if (cache_target_row != target_row || cache_target_col != target_col) {
-        init_cycle_cache(ROWS, COLS);
-        cache_target_row = target_row;
-        cache_target_col = target_col;
-    }
-
-    // Check cache first
-    if (cycle_cache[current_row][current_col] != 0) {
-        return cycle_cache[current_row][current_col] == 2 ? 1 : 0;
-    }
-
     Stack *stack = create_stack(ROWS * COLS);
-    if (!stack) return -1;
+    if (!stack) return -1; // Memory error
     int *visited = calloc(ROWS * COLS, sizeof(int));
     if (!visited) { free_stack(stack); return -1; }
 
     push(stack, current_row, current_col);
-    int has_cycle_result = 0;
 
     while (stack->top >= 0) {
         CellState state;
@@ -140,8 +111,9 @@ int has_cycle(int target_row, int target_col, int current_row, int current_col) 
 
         int row = state.row, col = state.col;
         if (row == target_row && col == target_col) {
-            has_cycle_result = 1;
-            break; // Cycle found
+            free_stack(stack);
+            free(visited);
+            return 1;
         }
 
         int index = row * COLS + col;
@@ -181,17 +153,9 @@ int has_cycle(int target_row, int target_col, int current_row, int current_col) 
         }
     }
 
-    // Cache the result for all visited cells
-    for (int i = 0; i < ROWS * COLS; i++) {
-        if (visited[i]) {
-            int r = i / COLS, c = i % COLS;
-            cycle_cache[r][c] = has_cycle_result ? 2 : 1;
-        }
-    }
-
     free_stack(stack);
     free(visited);
-    return has_cycle_result;
+    return 0;
 }
 
 int range_has_cycle(int target_row, int target_col) {

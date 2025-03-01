@@ -23,7 +23,7 @@ struct __attribute__((packed)) relation_data {
     int i1_column: 16;
     int i2_row :12;
     int i2_column: 16;
-    int error;
+    unsigned int error:1;
 };
 
 extern struct relation_data** relation;
