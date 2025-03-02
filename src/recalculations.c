@@ -496,7 +496,6 @@ void recalculate(int row, int col, int** sheet) {
             continue;
         }
         if (relation[current_row][current_col].operation == 1) {
-            relation[current_row][current_col].error = 0;
             continue;
         }
         if (relation[current_row][current_col].operation == 2) {

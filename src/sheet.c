@@ -166,6 +166,7 @@ int process_assign_input(int** sheet, char* cell , char* value){
         relation[coords1[0]][coords1[1]].i1_column = -1;
         relation[coords1[0]][coords1[1]].i2_row = -1;
         relation[coords1[0]][coords1[1]].i2_column = -1;
+        relation[coords1[0]][coords1[1]].error = 0;
         recalculate(coords1[0],coords1[1],sheet);
         return 1;
         // printf("value: %d\n" , sheet[coords1[0]][coords1[1]]);
@@ -212,14 +213,14 @@ int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , c
         v2 = atoi(val2);
         if (flag == 1){
             delete_dependencies(coords1[0],coords1[1] );
-            if (operation[0] == '+') sheet[coords1[0]][coords1[1]] = v1 + v2;
-            else if (operation[0] == '-') sheet[coords1[0]][coords1[1]] = v1 - v2;
-            else if (operation[0] == '*') sheet[coords1[0]][coords1[1]] = v1 * v2;
+            if (operation[0] == '+') {sheet[coords1[0]][coords1[1]] = v1 + v2;  relation[coords1[0]][coords1[1]].error = 0;}
+        else if (operation[0] == '-') {sheet[coords1[0]][coords1[1]] = v1 - v2;  relation[coords1[0]][coords1[1]].error = 0;}
+        else if (operation[0] == '*') {sheet[coords1[0]][coords1[1]] = v1 * v2;  relation[coords1[0]][coords1[1]].error = 0;}
             else if (operation[0] == '/') {
                 if (v2 == 0) { relation[coords1[0]][coords1[1]].error = 1;
                 }
                 else 
-                sheet[coords1[0]][coords1[1]] = v1 / v2;
+                {sheet[coords1[0]][coords1[1]] = v1 / v2;  relation[coords1[0]][coords1[1]].error = 0;}
             }
             relation[coords1[0]][coords1[1]].operation = 1;
             relation[coords1[0]][coords1[1]].i1_row = -1;
