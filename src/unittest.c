@@ -346,6 +346,20 @@ void test_process_functions() {
         printf("Test failed\n");
     }
 
+    // Test case 9: SLEEP with positive number (A1=SLEEP(2))
+    printf("Test case 9: SLEEP with positive number (A1=SLEEP(2))\n");
+    if (process_functions(sheet, "A1", "2", "SLEEP", "") == 1 && sheet[0][0] == 2) {
+    } else {
+        printf("Test failed\n");
+    }
+
+    // Test case 10: SLEEP with negative number (A2=SLEEP(-3))
+    printf("Test case 10: SLEEP with negative number (A2=SLEEP(-3))\n");
+    if (process_functions(sheet, "A2", "-3", "SLEEP", "") == 1 && sheet[1][0] == -3) {
+    } else {
+        printf("Test failed\n");
+    }
+
     // Assign initial values
     for (int i = 0; i < ROWS; i++) {
         // Assign values to the first column directly

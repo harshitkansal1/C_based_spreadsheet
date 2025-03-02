@@ -33,7 +33,7 @@
 \subsection{Data Structures and Algorithms}
 
 \noindent \textbf{Step 1: Sheet Representation and Dependency Tracking}\\
-The spreadsheet is represented using a 2D dynamic array. For tracking dependencies among cells, an adjacency structure based on AVL trees is used. Each cell maintains its dependency in a separate AVL tree . The AVL tree implementation optimizes the time complexity such that insertion, deletion, and lookup operations have an overall complexity of \(O(\log n)\). In addition, we used bitfields to store the operation type along with the dependent cell coordinates in a memory-efficient way.
+The spreadsheet is represented using a 2D dynamic array. For tracking dependencies among cells, an adjacency structure based on linked lists is used. Each cell maintains its dependencies in a separate linked list. The linked list implementation allows for efficient insertion and deletion at the head with a time complexity of \(O(1)\), though lookups and traversals require \(O(n)\), where \(n\) is the number of dependencies for a cell. Additionally, we used bitfields to store the operation type along with the dependent cell coordinates in a memory-efficient way.
 
 \vspace{0.3cm}
 
@@ -42,7 +42,7 @@ To propagate updates efficiently, a topological sort-based recalculation is impl
 
 \section{Challenges Faced}
 
-The main challenge was handling large range operations. For example, the command \texttt{A1=SUM(A2:ZZZ999)} involves almost 18000000 cells. The challenge was because of the large number of memory allocations and AVL tree insertions required and the cycle detection in the dependency graph. Also, we had to convert recursive implementations to iterative implementations to avoiding stack memory to be exceeded and the program to crash. This required a lot of time in debugging.
+The main challenge was handling large range operations. For example, the command \texttt{A1=SUM(A2:ZZZ999)} involves almost 18000000 cells. The challenge arose due to the large number of memory allocations and linked list operations required, as well as the cycle detection in the dependency graph. Additionally, we had to convert recursive implementations to iterative ones to prevent stack memory overflow and program crashes, which required significant debugging effort.
 
 \section{Structure of the Program}
 
@@ -55,15 +55,66 @@ The program is modularized into the following key files:
     \item \textbf{input\_process.c}: Parses user input and distinguishes among control commands, value assignments, arithmetic expressions, and function assignments.
     \item \textbf{sheet.c}: Manages the spreadsheet state including coordinate conversions. It provides routines to print the sheet and executes commands.
     \item \textbf{functions.c}: Implements various range functions (e.g., \texttt{MIN}, \texttt{MAX}, \texttt{SUM}, \texttt{AVG}, \texttt{STDEV}) as well as sleep functionality.
-    \item \textbf{recalculations.c}: Handles dependency management using AVL trees, cycle detection (\texttt{has\_cycle}), and the propagation of updates via topological sorting. All updates to dependent cells are scheduled here.
+    \item \textbf{recalculations.c}: Handles dependency management using linked lists, cycle detection (\texttt{has\_cycle}), and the propagation of updates via topological sorting. All updates to dependent cells are scheduled here.
 \end{itemize}
 
 \noindent \textbf{Execution Flow:}\\
-The execution flow begins with input read by \texttt{main.c}, moves to parsing in \texttt{input\_process.c}, and then branches to processing commands in either \texttt{sheet.c} or \texttt{functions.c}. Any changes that affect other cells trigger dependency updates in \texttt{recalculations.c} and finally, the updated sheet is printed as output.
-
+The execution flow begins with input read by \texttt{main.c}, moves to parsing in \texttt{input\_process.c}, and then branches to processing commands in either \texttt{sheet.c} or \texttt{functions.c}. Any changes that affect other cells trigger dependency updates in \texttt{recalculations.c}, and finally, the updated sheet is printed as output.
 \section{Test Suite}
 
+The test suite in \texttt{unittest.c} validates the spreadsheet program across \texttt{input\_process.c}, \texttt{sheet.c}, \texttt{functions.c}, and \texttt{recalculations.c}, using targeted test functions with normal, boundary, and error scenarios to ensure robustness. Below, we summarize the coverage and edge cases.
 
+\begin{itemize}
+    \item \textbf{Input Parsing (\texttt{test\_process\_input}, 15 cases):}
+    \begin{itemize}
+        \item \textit{Normal Cases:} Assignments (e.g., "ZZZ999=10"), arithmetic (e.g., "A1=10+20"), functions (e.g., "A1=MIN(A1:A3)"), and commands (e.g., "enable\_output").
+        \item \textit{Edge Cases:} Invalid inputs (e.g., "A1=10+20+30"), incomplete expressions (e.g., "A1=10+"), maximum cell references (e.g., "ZZZ999=100").
+    \end{itemize}
+
+    \item \textbf{Assignment Handling (\texttt{test\_process\_assign\_input}, 5 cases):}
+    \begin{itemize}
+        \item \textit{Normal Cases:} Constants (e.g., "A1=10"), overwrites (e.g., "A1=5"), references (e.g., "B2=A1").
+        \item \textit{Edge Cases:} Circular dependencies (e.g., "A1=A1", expected to fail), ensuring cycle detection prevents infinite loops.
+    \end{itemize}
+
+    \item \textbf{Arithmetic Operations (\texttt{test\_process\_arith\_expr}, 7 cases):}
+    \begin{itemize}
+        \item \textit{Normal Cases:} Basic operations (e.g., "A1=5+3"), references (e.g., "A1=B2-C3"), mixed inputs (e.g., "A1=2*C3").
+        \item \textit{Edge Cases:} Division by zero (e.g., "A1=B2/0", expecting error), cycles (e.g., "A1=B2+1", "B2=A1+1", expected to fail).
+    \end{itemize}
+
+    \item \textbf{Function Processing (\texttt{test\_process\_functions}, 10 + 4 large-range cases):}
+    \begin{itemize}
+        \item \textit{Normal Cases:} Operations like "SUM(A1:D10)", "AVG(A1:D5)", "STDEV(A1:D1)", and "SLEEP(2)" (sets value to 2 after delay).
+        \item \textit{Edge Cases:} Invalid ranges (e.g., "SUM(A10:A1)", expected to fail), circular dependencies (e.g., "A1=SUM(A1:A1)"), single-cell ranges (e.g., "SUM(A1:A1)"), and negative SLEEP inputs (e.g., "SLEEP(-3)", assigning -3 without delay).
+        \item \textit{Large-Range Cases:} Extensive ranges (e.g., "SUM(F1:ZZZ999)"), ensuring scalability.
+    \end{itemize}
+
+    \item \textbf{Cycle Detection (\texttt{test\_has\_cycle}, 6 cases; \texttt{test\_range\_has\_cycle}, 5 cases):}
+    \begin{itemize}
+        \item \textit{Normal Cases:} Direct self-references (e.g., A1=A1), indirect cycles (e.g., A1=B1, B1=A1), range cycles (e.g., "B2=MIN(A1:C3)", "C3=MIN(B2:A1)").
+        \item \textit{Edge Cases:} Sheet-edge cycles (e.g., "E5=E5"), single-cell range references (e.g., "D4=MIN(A1:A1)").
+    \end{itemize}
+
+    \item \textbf{Dependency Management (\texttt{test\_add\_delete\_dependencies}, 5 cases):}
+    \begin{itemize}
+        \item \textit{Normal Cases:} Single (e.g., A1 impacts B1) and range dependencies (e.g., A1:B2 impacts C3).
+        \item \textit{Edge Cases:} Self-referential dependencies (e.g., C3 impacts C3).
+    \end{itemize}
+
+    \item \textbf{Recalculation (\texttt{test\_recalculate}, 7 cases):}
+    \begin{itemize}
+        \item \textit{Normal Cases:} Propagation (e.g., B1=A1+5), references (e.g., C3=B2), arithmetic (e.g., C1=A1+B1), range sums (e.g., F6=SUM(F1:J5)).
+        \item \textit{Edge Cases:} Division by zero (e.g., B1=A1/0), cycles (e.g., A1=B1, B1=A1), error propagation through ranges (e.g., C1=MIN(A1:B1) with B1 in error).
+    \end{itemize}
+
+    \item \textbf{Topological Sort and Memory (\texttt{test\_toposort}, 3 cases; \texttt{test\_free\_dependencies}, 1 case):}
+    \begin{itemize}
+        \item \textit{Normal Cases:} Linear (A1$\rightarrow$B1$\rightarrow$C1), branching (A1$\rightarrow$B1, A1$\rightarrow$C1) dependencies, isolated nodes; memory cleanup after dependency additions.
+    \end{itemize}
+\end{itemize}
+
+The suite ensures robustness by addressing boundary cell references, integer overflows, large ranges, and error propagation, handling both typical and exceptional scenarios reliably.
 \section{Diagram of Software}
 
 A high-level flowchart of the program is outlined below:
@@ -75,7 +126,7 @@ A high-level flowchart of the program is outlined below:
     \hline
     \textbf{Processing Block} & \texttt{input\_process.c} splits the command into control, assignment, arithmetic, or function types and calls the respective module \\
     \hline
-    \textbf{Dependency Block} & \texttt{recalculations.c} updates the dependency graph (AVL trees) and recalculates affected cells using topological sort \\
+    \textbf{Dependency Block} & \texttt{recalculations.c} updates the dependency graph (linked lists) and recalculates affected cells using topological sort \\
     \hline
     \textbf{Output Block} & \texttt{sheet.c} prints the updated sheet via \texttt{print\_sheet} \\
     \hline
@@ -86,7 +137,7 @@ This modular structure and clear separation of responsibilities enhance both the
 
 \section{Conclusion}
 
-In summary, the program implements a spreadsheet application with arithmetic and range operations. We implemented the sheet using dynamic arrays, dependency management using AVL trees, and topological sort for recalculation in order to achieve efficiency and scalability even for very large inputs. While there were issues with performance and memory management during large operations, they were resolved using iterative implementations and the use of explicit stacks.
+In summary, the program implements a spreadsheet application with arithmetic and range operations. We implemented the sheet using dynamic arrays, dependency management using linked lists, and topological sort for recalculation to achieve efficiency and scalability even for very large inputs. While there were issues with performance and memory management during large operations, they were resolved using iterative implementations and the use of explicit stacks.
 
 \pagestyle{plain}
 \end{document}
