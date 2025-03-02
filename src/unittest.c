@@ -1,7 +1,6 @@
 #include<stdio.h>  
 #include<stdlib.h>
 #include<string.h>
-//include our program files and headers
 #include"functions.h"
 #include"recalculations.h"
 #include"sheet.h"
@@ -13,12 +12,17 @@ extern int process_assign_input(int** sheet, char* cell, char* value);
 extern int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , char *val2);
 extern int** initialize_sheet(int rows, int cols);
 extern void free_sheet(int** sheet);
+extern void clear_dependency(int, int, int, int);
+extern void add_dependency(int, int, int, int);
+extern void delete_dependencies(int, int);
+extern void recalculate(int, int, int**);
+extern void toposort(int, int, int*, int*, int*);
 
 //unit test to test process_input function in input_process.c
 void test_process_input(){
     ROWS = 999;
     COLS = 18278;
-    printf("-----Testing process_input function-----\n");
+    printf("\n-----Testing process_input function-----\n");
     // Allocate memory once
     char *cell1 = (char*)malloc(10);
     char *cell2 = (char*)malloc(10);
@@ -152,7 +156,7 @@ void test_process_input(){
 }
 
 void test_process_assign_input() {
-    printf("-----Testing process_assign_input function-----\n");
+    printf("\n-----Testing process_assign_input function-----\n");
 
     ROWS = 10;
     COLS = 10;
@@ -199,7 +203,7 @@ void test_process_assign_input() {
 }
 
 void test_process_arith_expr() {
-    printf("-----Testing process_arith_expr function-----\n");
+    printf("\n-----Testing process_arith_expr function-----\n");
     
     ROWS = 10;
     COLS = 10;
@@ -251,6 +255,11 @@ void test_process_arith_expr() {
     }
 
     // Test case 7: Negative numbers (A1 = -1 + -1)
+    printf("Test case 7: A1 = -1 + -1\n");
+    if (process_arith_expr(sheet, "A1", "-1", "+", "-1") == 1 && sheet[0][0] == -2) {
+    } else {
+        printf("Test failed\n");
+    }
 
     
     // Free allocated memory
@@ -258,7 +267,7 @@ void test_process_arith_expr() {
 }
 
 void test_process_functions() {
-    printf("-----Testing process_functions function-----\n");
+    printf("\n-----Testing process_functions function-----\n");
 
     ROWS = 999;
     COLS = 18278;
@@ -270,16 +279,16 @@ void test_process_functions() {
     process_assign_input(sheet, "C1", "30");
     process_assign_input(sheet, "D1", "40");
     
-    // Test case 1: SUM(A1:D1) -> E1
-    printf("Test case 1: SUM(A1:D1) -> E1\n");
-    if (process_functions(sheet, "E1", "A1", "SUM", "D1") == 1 && sheet[0][4] == 100) {
+    // Test case 1: SUM(A1:D10) -> E1
+    printf("Test case 1: SUM(A1:D10) -> E1\n");
+    if (process_functions(sheet, "E1", "A1", "SUM", "D10") == 1 && sheet[0][4] == 100) {
     } else {
         printf("Test failed\n");
     }
     
-    // Test case 2: AVG(A1:D1) -> F1
-    printf("Test case 2: AVG(A1:D1) -> F1\n");
-    if (process_functions(sheet, "E2", "A1", "AVG", "D1") == 1 && sheet[1][4] == 25) {
+    // Test case 2: AVG(A1:D5) -> F1
+    printf("Test case 2: AVG(A1:D5) -> F1\n");
+    if (process_functions(sheet, "E2", "A1", "AVG", "D5") == 1 && sheet[1][4] == 5) {
     } else {
         printf("Test failed\n");
     }
@@ -292,8 +301,8 @@ void test_process_functions() {
     }
     
     // Test case 4: MAX(A1:D1) -> H1
-    printf("Test case 4: MAX(A1:D1) -> H1\n");
-    if (process_functions(sheet, "E4", "A1", "MAX", "D1") == 1 && sheet[3][4] == 40) {
+    printf("Test case 4: MAX(A1:D3) -> H1\n");
+    if (process_functions(sheet, "E4", "A1", "MAX", "D3") == 1 && sheet[3][4] == 40) {
     } else {
         printf("Test failed\n");
     }
@@ -325,7 +334,7 @@ void test_process_functions() {
         sheet[i][0] = i + 1;
     }
     
-    printf("-----Testing process_functions function for large ranges-----\n");
+    printf("\n-----Testing process_functions function for large ranges-----\n");
 
     // Large test case 1: SUM(A1:A999) -> B1
     printf("Large test case 1: SUM(A1:A999) -> B1\n");
@@ -369,10 +378,531 @@ void test_process_functions() {
     free_sheet(sheet);
 }
 
+void reset_globals() {
+    free_relation_graph();
+    free_dependencies();
+    create_relation_graph();
+}
+
+void test_has_cycle() {
+    printf("\n----- Testing has_cycle -----\n");
+    
+    // Setup
+    ROWS = 5;
+    COLS = 5;
+    int** sheet = initialize_sheet(ROWS, COLS);
+
+    // Test 1: Direct self-reference
+    reset_globals();
+    printf("Test 1: Direct self-reference\n");
+    relation[0][0].operation = 2;
+    relation[0][0].i2_row = 0;
+    relation[0][0].i2_column = 0;
+    add_dependencies(0, 0);
+    int result = has_cycle(0, 0, 0, 0);
+    printf(result == 1 ? "Passed\n" : "Failed\n");
+
+    // Test 2: Indirect cycle
+    reset_globals();
+    printf("Test 2: Indirect cycle\n");
+    relation[0][0].operation = 2;
+    relation[0][0].i2_row = 1;
+    relation[0][0].i2_column = 0;
+    relation[1][0].operation = 2;
+    relation[1][0].i2_row = 0;
+    relation[1][0].i2_column = 0;
+    add_dependencies(0, 0);
+    add_dependencies(1, 0);
+    result = has_cycle(0, 0, 0, 0);  // Start from the original target
+    printf(result == 1 ? "Passed\n" : "Failed\n");
+
+    // Test 3: No cycle
+    reset_globals();
+    printf("Test 3: No cycle\n");
+    relation[2][2].operation = 2;
+    relation[2][2].i2_row = 1;
+    relation[2][2].i2_column = 1;
+    add_dependencies(2, 2);
+    result = has_cycle(2, 2, 1, 1);
+    printf(result == 0 ? "Passed\n" : "Failed\n");
+
+    // Test 4: Long cycle
+    reset_globals();
+    printf("Test 4: Long cycle\n");
+    relation[0][1].operation = 2;
+    relation[0][1].i2_row = 0;
+    relation[0][1].i2_column = 2;
+    relation[0][2].operation = 2;
+    relation[0][2].i2_row = 1;
+    relation[0][2].i2_column = 2;
+    relation[1][2].operation = 2;
+    relation[1][2].i2_row = 1;
+    relation[1][2].i2_column = 1;
+    relation[1][1].operation = 2;
+    relation[1][1].i2_row = 0;
+    relation[1][1].i2_column = 1;
+    add_dependencies(0, 1);
+    add_dependencies(0, 2);
+    add_dependencies(1, 2);
+    add_dependencies(1, 1);
+    result = has_cycle(0, 1, 0, 1);
+    printf(result == 1 ? "Passed\n" : "Failed\n");
+
+    // Test 5: Complex multi-branch cycle
+    reset_globals();
+    printf("Test 5: Complex multi-branch cycle\n");
+    relation[2][2].operation = 2;
+    relation[2][2].i2_row = 3;
+    relation[2][2].i2_column = 3;
+    relation[3][3].operation = 2;
+    relation[3][3].i2_row = 4;
+    relation[3][3].i2_column = 4;
+    relation[4][4].operation = 2;
+    relation[4][4].i2_row = 2;
+    relation[4][4].i2_column = 2;
+    add_dependencies(2, 2);
+    add_dependencies(3, 3);
+    add_dependencies(4, 4);
+    result = has_cycle(2, 2, 2, 2);
+    printf(result == 1 ? "Passed\n" : "Failed\n");
+
+    free_sheet(sheet);
+}
+
+void test_range_has_cycle() {
+    printf("\n----- Testing range_has_cycle -----\n");
+    
+    ROWS = 5;
+    COLS = 5;
+    int** sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    // Test 1: Direct self-reference within range
+    printf("Test 1: Direct cycle in range\n");
+    relation[0][0].operation = 3;
+    relation[0][0].i1_row = 0;
+    relation[0][0].i1_column = 0;
+    relation[0][0].i2_row = 0;
+    relation[0][0].i2_column = 0;
+    add_dependencies(0, 0);
+    int result = range_has_cycle(0, 0);
+    printf(result == 1 ? "Passed\n" : "Failed\n");
+
+    // Test 2: Simple indirect cycle
+    printf("Test 2: Indirect cycle in range\n");
+    relation[1][1].operation = 3;
+    relation[1][1].i1_row = 0;
+    relation[1][1].i1_column = 0;
+    relation[1][1].i2_row = 2;
+    relation[1][1].i2_column = 2;
+    relation[2][2].operation = 3;
+    relation[2][2].i1_row = 1;
+    relation[2][2].i1_column = 1;
+    relation[2][2].i2_row = 0;
+    relation[2][2].i2_column = 0;
+    add_dependencies(1, 1);
+    add_dependencies(2, 2);
+    result = range_has_cycle(1, 1);
+    printf(result == 1 ? "Passed\n" : "Failed\n");
+
+    // Test 3: No cycle case
+    printf("Test 3: No cycle in range\n");
+    relation[3][3].operation = 3;
+    relation[3][3].i1_row = 0;
+    relation[3][3].i1_column = 0;
+    relation[3][3].i2_row = 1;
+    relation[3][3].i2_column = 1;
+    add_dependencies(3, 3);
+    result = range_has_cycle(3, 3);
+    printf(result == 0 ? "Passed\n" : "Failed\n");
+
+    // Test 4: Long cycle case
+    printf("Test 4: Long cycle\n");
+    relation[4][4].operation = 3;
+    relation[4][4].i1_row = 3;
+    relation[4][4].i1_column = 3;
+    relation[4][4].i2_row = 0;
+    relation[4][4].i2_column = 0;
+    relation[3][3].operation = 3;
+    relation[3][3].i1_row = 2;
+    relation[3][3].i1_column = 2;
+    relation[3][3].i2_row = 4;
+    relation[3][3].i2_column = 4;
+    relation[2][2].operation = 3;
+    relation[2][2].i1_row = 1;
+    relation[2][2].i1_column = 1;
+    relation[2][2].i2_row = 3;
+    relation[2][2].i2_column = 3;
+    relation[1][1].operation = 3;
+    relation[1][1].i1_row = 0;
+    relation[1][1].i1_column = 0;
+    relation[1][1].i2_row = 2;
+    relation[1][1].i2_column = 2;
+    add_dependencies(4, 4);
+    add_dependencies(3, 3);
+    add_dependencies(2, 2);
+    add_dependencies(1, 1);
+    result = range_has_cycle(4, 4);
+    printf(result == 1 ? "Passed\n" : "Failed\n");
+
+    // // Test 4: Long cycle involving multiple cells
+    // printf("Test 4: Long cycle involving multiple cells\n");
+    // relation[0][1].operation = 3;
+    // relation[0][1].i1_row = 1;
+    // relation[0][1].i1_column = 2;
+    // relation[1][2].operation = 3;
+    // relation[1][2].i1_row = 2;
+    // relation[1][2].i1_column = 1;
+    // relation[2][1].operation = 3;
+    // relation[2][1].i1_row = 0;
+    // relation[2][1].i1_column = 1;
+    // add_dependencies(0, 1);
+    // add_dependencies(1, 2);
+    // add_dependencies(2, 1);
+    // result = range_has_cycle(0, 1);
+    // printf(result == 1 ? "Passed\n" : "Failed\n");
+
+    // Test 5: Single-cell range, no cycle
+    printf("Test 5: Single-cell range, no cycle\n");
+    relation[3][3].operation = 3;
+    relation[3][3].i1_row = 3;
+    relation[3][3].i1_column = 3;
+    add_dependencies(3, 3);
+    result = range_has_cycle(3, 3);
+    printf(result == 0 ? "Passed\n" : "Failed\n");
+
+    free_sheet(sheet);
+}
+
+
+void test_add_delete_dependencies() {
+    printf("\n----- Testing add/delete dependencies -----\n");
+    
+    ROWS = 2;
+    COLS = 2;
+    int** sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    // Test 1: Add single dependency
+    printf("Test 1: Add single dependency\n");
+    add_dependency(0, 0, 0, 1);
+    struct AVLNode* node = dependencies[0][0].root;
+    if (node && node->row == 0 && node->col == 1) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+
+    // Test 2: Delete dependency
+    printf("Test 2: Delete dependency\n");
+    clear_dependency(0, 0, 0, 1);
+    if (dependencies[0][0].root == NULL) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+
+    // Test 3: Range dependencies
+    printf("Test 3: Range dependencies\n");
+    int* range_count = malloc(sizeof(int));
+    int** cells = get_range_cells((int[]){0,0}, (int[]){1,1}, range_count);
+    for (int i = 0; i < *range_count; i++) {
+        add_dependency(cells[i][0], cells[i][1], 1, 1);
+    }
+    
+    int valid = 1;
+    for (int i = 0; i < *range_count; i++) {
+        if (!dependencies[cells[i][0]][cells[i][1]].root) valid = 0;
+    }
+    if (valid) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+
+    // Test 4: Delete range dependencies
+    printf("Test 4: Delete range dependencies\n");
+    for (int i = 0; i < *range_count; i++) {
+        clear_dependency(cells[i][0], cells[i][1], 1, 1);
+    }
+    valid = 1;
+    for (int i = 0; i < *range_count; i++) {
+        if (dependencies[cells[i][0]][cells[i][1]].root) valid = 0;
+    }
+    if (valid) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+
+    // Test 5: Self-referential dependency
+    printf("Test 5: Self-referential dependency\n");
+    add_dependency(1, 1, 1, 1);
+    if (dependencies[1][1].root && dependencies[1][1].root->row == 1 && dependencies[1][1].root->col == 1) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+    clear_dependency(1, 1, 1, 1);
+
+    // Ye waala tc abhi SEG FAULT de raha hai, dekhna hoga iska solution
+    // // Test 6: Circular dependency detection
+    // printf("Test 6: Circular dependency detection\n");
+    // add_dependency(0, 0, 0, 1);
+    // add_dependency(0, 1, 1, 0);
+    // add_dependency(1, 0, 0, 0);
+    // if (range_has_cycle(0, 0)) {
+    //     printf("Passed\n");
+    // } else {
+    //     printf("Failed\n");
+    // }
+
+    free(range_count);
+    for (int i = 0; i < *range_count; i++) free(cells[i]);
+    free(cells);
+    free_sheet(sheet);
+}
+
+
+void test_toposort() {
+    printf("\n----- Testing toposort -----\n");
+    
+    ROWS = 3;
+    COLS = 3;
+    int** sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+    
+    // Test 1: Linear dependencies (A0 -> A1 -> A2)
+    printf("Test 1: Linear dependencies\n");
+    add_dependency(0, 0, 0, 1);
+    add_dependency(0, 1, 0, 2);
+    int visited[ROWS * COLS];
+    for (int i = 0; i < ROWS * COLS; i++) visited[i] = 0;
+    int stack[ROWS * COLS];
+    int stack_index = 0;
+    toposort(0, 0, visited, stack, &stack_index);
+    if (stack_index == 3 && stack[0] == 2 && stack[1] == 1 && stack[2] == 0) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+
+    // Reset for next test
+    reset_globals();
+    
+    // Test 2: Branching dependencies (A0 -> A1, A0 -> A2)
+    printf("Test 2: Branching dependencies\n");
+    add_dependency(0, 0, 0, 1);
+    add_dependency(0, 0, 0, 2);
+    memset(visited, 0, sizeof(visited));
+    stack_index = 0;
+    toposort(0, 0, visited, stack, &stack_index);
+    if (stack_index == 3 && stack[0] == 1 && stack[1] == 2 && stack[2] == 0) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+
+    // Reset for next test
+    reset_globals();
+    
+    // // Test 3: Cycle detection (A0 -> A1 -> A2 -> A0)
+    // printf("Test 3: Cycle detection\n");
+    // add_dependency(0, 0, 0, 1);
+    // add_dependency(0, 1, 0, 2);
+    // add_dependency(0, 2, 0, 0);
+    // memset(visited, 0, sizeof(visited));
+    // stack_index = 0;
+    // toposort(0, 0, visited, stack, &stack_index);
+    // if (stack_index == 0) {
+    //     printf("Passed (Cycle detected, no valid sort)\n");
+    // } else {
+    //     printf("Failed\n");
+    // }
+    
+    // // Reset for next test
+    // reset_globals();
+    
+    // Test 3: Isolated nodes (No dependencies)
+    printf("Test 3: Isolated nodes\n");
+    memset(visited, 0, sizeof(visited));
+    stack_index = 0;
+    toposort(1, 1, visited, stack, &stack_index);
+    if (stack_index == 1 && stack[0] == 4) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+    
+    free_sheet(sheet);
+}
+
+
+void test_recalculate() {
+    printf("\n----- Testing recalculate -----\n");
+
+    // Test Case 1: Simple value propagation
+    ROWS = 2;
+    COLS = 2;
+    int** sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    sheet[0][0] = 10;
+    relation[0][1].operation = 8;  // Add constant
+    relation[0][1].i1_row = 0;
+    relation[0][1].i1_column = 0;
+    relation[0][1].i2_row = 5;    // Constant value
+    add_dependencies(0, 1);
+
+    printf("Test 1: Simple value propagation\n");
+    recalculate(0, 0, sheet);
+    printf(sheet[0][1] == 15 ? "Passed\n" : "Failed\n");
+
+    free_sheet(sheet);
+
+    // Test Case 2: Cell referencing another cell
+    ROWS = 3;
+    COLS = 3;
+    sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    sheet[1][1] = 20;
+    relation[2][2].operation = 2;  // Reference (B2 -> C3)
+    relation[2][2].i2_row = 1;
+    relation[2][2].i2_column = 1;
+    add_dependencies(2, 2);
+
+    printf("Test 2: Cell referencing another cell\n");
+    recalculate(1, 1, sheet);
+    printf(sheet[2][2] == 20 ? "Passed\n" : "Failed\n");
+
+    free_sheet(sheet);
+
+    // Test Case 3: Addition of two referenced cells
+    ROWS = 3;
+    COLS = 3;
+    sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    sheet[0][0] = 7;
+    sheet[0][1] = 8;
+    relation[0][2].operation = 12;  // A1 + B1
+    relation[0][2].i1_row = 0;
+    relation[0][2].i1_column = 0;
+    relation[0][2].i2_row = 0;
+    relation[0][2].i2_column = 1;
+    add_dependencies(0, 2);
+
+    printf("Test 3: Addition of two referenced cells\n");
+    recalculate(0, 0, sheet);
+    printf(sheet[0][2] == 15 ? "Passed\n" : "Failed\n");
+
+    free_sheet(sheet);
+
+    // Test Case 4: Division by zero
+    ROWS = 2;
+    COLS = 2;
+    sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    sheet[0][0] = 10;
+    relation[0][1].operation = 11; // A1 / 0
+    relation[0][1].i1_row = 0;
+    relation[0][1].i1_column = 0;
+    relation[0][1].i2_row = 0; // Dividing by zero
+    add_dependencies(0, 1);
+
+    printf("Test 4: Division by zero\n");
+    recalculate(0, 0, sheet);
+    printf(relation[0][1].error == 1 ? "Passed\n" : "Failed\n");
+
+    free_sheet(sheet);
+
+    // Test Case 5: Cyclic dependency handling
+    ROWS = 3;
+    COLS = 3;
+    sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    relation[0][0].operation = 2;
+    relation[0][0].i2_row = 0;
+    relation[0][0].i2_column = 1;
+
+    relation[0][1].operation = 2;
+    relation[0][1].i2_row = 0;
+    relation[0][1].i2_column = 0;
+
+    add_dependencies(0, 0);
+    add_dependencies(0, 1);
+
+    printf("Test 5: Cyclic dependency handling\n");
+    recalculate(0, 0, sheet);
+    printf(relation[0][0].error == 1 && relation[0][1].error == 1 ? "Passed\n" : "Failed\n");
+
+    free_sheet(sheet);
+
+    // Test Case 6: Large range sum
+    ROWS = 10;
+    COLS = 10;
+    sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            sheet[i][j] = 2;
+        }
+    }
+
+    relation[5][5].operation = 6; // Sum
+    relation[5][5].i1_row = 0;
+    relation[5][5].i1_column = 0;
+    relation[5][5].i2_row = 4;
+    relation[5][5].i2_column = 4;
+    add_dependencies(5, 5);
+
+    printf("Test 5: Large range sum\n");
+    recalculate(0, 0, sheet);
+    printf(sheet[5][5] == 50 ? "Passed\n" : "Failed\n");
+
+    free_sheet(sheet);
+}
+
+void test_free_dependencies() {
+    printf("\n----- Testing free_dependencies -----\n");
+
+    ROWS = 2;
+    COLS = 2;
+    int** sheet = initialize_sheet(ROWS, COLS);
+    reset_globals();
+
+    // Add some dependencies
+    add_dependency(0, 0, 0, 1);
+    add_dependency(0, 1, 1, 1);
+
+    printf("Test: Free dependencies\n");
+    free_dependencies();
+
+    // Ensure dependencies itself is NULL
+    if (dependencies == NULL) {
+        printf("Passed\n");
+    } else {
+        printf("Failed\n");
+    }
+
+    free_sheet(sheet);
+}
+
+
 int main(){
     test_process_input();
     test_process_assign_input();
     test_process_arith_expr();
     test_process_functions();
+    test_has_cycle();
+    test_range_has_cycle();
+    test_add_delete_dependencies();
+    test_toposort();
+    test_recalculate();
+    test_free_dependencies();
     return 0;
 }
