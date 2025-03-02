@@ -41,6 +41,10 @@ test: $(TEST_TARGET)
 $(TEST_TARGET): $(TEST_OBJS)
 	$(CXX) -O3 $(TEST_OBJS) -o $@ 
 
+report: report.pdf
+
+report.pdf: report.tex
+	pdflatex report.tex
 # $(TEST_OBJ): $(TEST_SRC)
 # 	mkdir -p $(dir $@)
 # 	$(CC) -O3 $(CPPFLAGS) -c $< -o $@

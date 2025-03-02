@@ -16,6 +16,7 @@ int cell_to_coords(char *cell , int* coords){
     int j = 0;
     int col = 0;
     int row = 0;
+    if (cell[0] == '\0') return 0;
     while ((cell[i] >= 'A' && cell[i] <= 'Z') && cell[i] != '\0'){
         i++;
     }
@@ -27,6 +28,7 @@ int cell_to_coords(char *cell , int* coords){
     }
     if (col > COLS) return 0;
     if (cell[i] == '0') return 0;
+    if (cell[i] == '\0') return 0;
     while ((cell[i] >= '0' && cell[i] <= '9') && cell[i] != '\0'){
         row*=10;
         row+=(cell[i]-'0');
