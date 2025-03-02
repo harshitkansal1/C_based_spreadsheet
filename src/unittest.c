@@ -6,8 +6,8 @@
 #include"sheet.h"
 #include"input_process.h"
 
-int ROWS;
-int COLS;
+extern int ROWS;
+extern int COLS;
 extern int process_assign_input(int** sheet, char* cell, char* value);
 extern int process_arith_expr(int **sheet, char *cell, char *val1 , char *operation , char *val2);
 extern int** initialize_sheet(int rows, int cols);
