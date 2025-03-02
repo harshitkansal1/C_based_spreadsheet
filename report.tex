@@ -1,3 +1,4 @@
+
 \documentclass[12pt,letterpaper,onecolumn]{exam}
 \usepackage{array}
 \usepackage{algorithm}
@@ -33,7 +34,7 @@
 \subsection{Data Structures and Algorithms}
 
 \noindent \textbf{Step 1: Sheet Representation and Dependency Tracking}\\
-The spreadsheet is represented using a 2D dynamic array. For tracking dependencies among cells, an adjacency structure based on linked lists is used. Each cell maintains its dependencies in a separate linked list. The linked list implementation allows for efficient insertion and deletion at the head with a time complexity of \(O(1)\), though lookups and traversals require \(O(n)\), where \(n\) is the number of dependencies for a cell. Additionally, we used bitfields to store the operation type along with the dependent cell coordinates in a memory-efficient way.
+The spreadsheet is represented using a 2D dynamic array. For tracking dependencies among cells, an adjacency structure based on linked lists is used. Each cell maintains its dependencies in a separate linked list. The linked list implementation allows for insertion and deletion at the head with a time complexity of \(O(n)\)(due to checking for duplicates before insertion), though lookups and traversals require \(O(n)\), where \(n\) is the number of dependencies for a cell. Additionally, we used bitfields to store the operation type along with the dependent cell coordinates in a memory-efficient way.
 
 \vspace{0.3cm}
 
